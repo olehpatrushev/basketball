@@ -28,88 +28,133 @@
 
         let camera; // Declare camera variable in global scope
 
+        const IS_DEV = false;
+
+        const showAxis = function(size) {
+            const makeTextPlane = function(text, color, size) {
+                const dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", 50, scene, true);
+                dynamicTexture.hasAlpha = true;
+                dynamicTexture.drawText(text, 5, 40, "bold 36px Arial", color, "transparent", true);
+                const plane = BABYLON.Mesh.CreatePlane("TextPlane", size, scene, true);
+                plane.material = new BABYLON.StandardMaterial("TextPlaneMaterial", scene);
+                plane.material.backFaceCulling = false;
+                plane.material.specularColor = new BABYLON.Color3(0, 0, 0);
+                plane.material.diffuseTexture = dynamicTexture;
+                return plane;
+            };
+            const axisX = BABYLON.Mesh.CreateLines("axisX", [
+                BABYLON.Vector3.Zero(), new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, 0.05 * size, 0),
+                new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, -0.05 * size, 0)
+            ], scene);
+            axisX.color = new BABYLON.Color3(1, 0, 0);
+            const xChar = makeTextPlane("X", "red", size / 10);
+            xChar.position = new BABYLON.Vector3(0.9 * size, -0.05 * size, 0);
+            const axisY = BABYLON.Mesh.CreateLines("axisY", [
+                BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(-0.05 * size, size * 0.95, 0),
+                new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(0.05 * size, size * 0.95, 0)
+            ], scene);
+            axisY.color = new BABYLON.Color3(0, 1, 0);
+            const yChar = makeTextPlane("Y", "green", size / 10);
+            yChar.position = new BABYLON.Vector3(0, 0.9 * size, -0.05 * size);
+            const axisZ = BABYLON.Mesh.CreateLines("axisZ", [
+                BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, -0.05 * size, size * 0.95),
+                new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, 0.05 * size, size * 0.95)
+            ], scene);
+            axisZ.color = new BABYLON.Color3(0, 0, 1);
+            const zChar = makeTextPlane("Z", "blue", size / 10);
+            zChar.position = new BABYLON.Vector3(0, 0.05 * size, 0.9 * size);
+        };
+
         // Create the scene
-        const createScene = function() {
+        const scene = (() => {
             // Create a basic Babylon Scene object
             const scene = new BABYLON.Scene(engine);
 
             // Create and position a free camera
             camera = new BABYLON.ArcRotateCamera("camera1", 10, 10, 10, BABYLON.Vector3(-8.5, 0.5, 0.8), scene);
-            //camera.attachControl(canvas, true);
+
+            if (IS_DEV) {
+                camera.setPosition(new BABYLON.Vector3(-10, -10, -100));
+                camera.attachControl(canvas, true);
+            }
 
             // Create a basic light, aiming 0, 1, 0 - meaning, to the sky
             const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
             light.intensity = 0.7;
 
             // Load the GLTF model
-            BABYLON.SceneLoader.Append("./", "scene.gltf", scene, function(scene) {
-                // Do something with the scene after loading
-                const animation = new BABYLON.Animation("cameraAnimation", "position", 30,
-                    BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+            BABYLON.SceneLoader.Append("./", "scene.gltf", scene, function() {
+                if (!IS_DEV) {
+                    // Do something with the scene after loading
+                    const animation = new BABYLON.Animation("cameraAnimation", "position", 30,
+                        BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
 
-                // Animation keys
-                const keys = [];
-                keys.push({
-                    frame: 0,
-                    //value: new BABYLON.Vector3(1.9, 3.6, 9.8) // Starting position
-                    value: new BABYLON.Vector3(5, 10, 10) // Starting position
-                });
-                keys.push({
-                    frame: 100,
-                    //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
-                    value: new BABYLON.Vector3(10, 10, -10) // Ending position
-                });
-                keys.push({
-                    frame: 200,
-                    //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
-                    value: new BABYLON.Vector3(5, 10, 10) // Starting position
-                });
+                    // Animation keys
+                    const keys = [];
+                    keys.push({
+                        frame: 0,
+                        //value: new BABYLON.Vector3(1.9, 3.6, 9.8) // Starting position
+                        value: new BABYLON.Vector3(5, 10, 10) // Starting position
+                    });
+                    keys.push({
+                        frame: 100,
+                        //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
+                        value: new BABYLON.Vector3(10, 10, -10) // Ending position
+                    });
+                    keys.push({
+                        frame: 200,
+                        //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
+                        value: new BABYLON.Vector3(5, 10, 10) // Starting position
+                    });
 
-                animation.setKeys(keys);
+                    animation.setKeys(keys);
 
-                // Attach the animation to the camera
-                camera.animations.push(animation);
+                    // Attach the animation to the camera
+                    camera.animations.push(animation);
 
-                // Create an animation for the camera's target
-                const targetAnimation = new BABYLON.Animation("cameraTargetAnimation", "target", 30,
-                    BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+                    // Create an animation for the camera's target
+                    const targetAnimation = new BABYLON.Animation("cameraTargetAnimation", "target", 30,
+                        BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
 
-                const targetKeys = [];
-                targetKeys.push({
-                    frame: 0,
-                    value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
-                });
-                targetKeys.push({
-                    frame: 100,
-                    value: new BABYLON.Vector3(-7, 0.5, 0.8) // Ending target
-                });
-                targetKeys.push({
-                    frame: 200,
-                    value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
-                });
+                    const targetKeys = [];
+                    targetKeys.push({
+                        frame: 0,
+                        value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
+                    });
+                    targetKeys.push({
+                        frame: 100,
+                        value: new BABYLON.Vector3(-7, 0.5, 0.8) // Ending target
+                    });
+                    targetKeys.push({
+                        frame: 200,
+                        value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
+                    });
 
-                targetAnimation.setKeys(targetKeys);
+                    targetAnimation.setKeys(targetKeys);
 
-                // Attach the animation to the camera
-                camera.animations.push(targetAnimation);
+                    // Attach the animation to the camera
+                    camera.animations.push(targetAnimation);
 
-                // Run the animation
-                scene.beginAnimation(camera, 0, 200, true);
+                    // Run the animation
+                    scene.beginAnimation(camera, 0, 200, true);
+                }
 
                 scene.getMeshByName('ball1').setEnabled(false);
                 scene.getMeshByName('ball2').setEnabled(false);
 
+                //                scene.getMeshByName('ball1').rotationQu = new BABYLON.Vector3(0, 0, 0)
+
                 scene.getMeshByName('marker_primitive0').setEnabled(false);
                 scene.getMeshByName('marker_primitive1').setEnabled(false);
+
+                IS_DEV && showAxis(100);
 
                 startLoop();
             });
 
 
             return scene;
-        };
-
-        const scene = createScene();
+        })();
 
         const logCameraParameters = function(camera) {
             console.log("Camera Position:", camera.position);
@@ -121,12 +166,12 @@
 
         let shotBezier = null;
         let animationIndex = 0;
+        let shotTracer = null;
 
         // Register a render loop to repeatedly render the scene
         const startLoop = () => {
             engine.runRenderLoop(function() {
                 scene.render();
-
 
                 //logCameraParameters(scene.activeCamera);
 
@@ -140,6 +185,23 @@
                         shotBezier = null;
                         animationIndex = 0;
                         scene.getMeshByName('ball1').setEnabled(false);
+                    }
+
+                    if (shotBezier) {
+                        if (shotTracer) {
+                            scene.removeMesh(shotTracer, true);
+                        }
+
+                        if (animationIndex > 0) {
+                            const ball1Matrix = ball1.getWorldMatrix();
+
+                            shotTracer = BABYLON.Mesh.CreateLines("shotTracer", [...shotBezier.getPoints()].splice(0, animationIndex));
+                            shotTracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
+                            shotTracer.color = new BABYLON.Color3(0, 1, 0);
+
+                            shotTracer.updatePoseMatrix(ball1Matrix);
+                            shotTracer.scaling.z = -1;
+                        }
                     }
                 } else {
                     const x = Math.floor(Math.random() * 762 * 2) - 762;
@@ -210,7 +272,8 @@
 
             animationIndex = 0;
 
-            scene.getMeshByName('ball1').setEnabled(true);
+            ball1.setEnabled(true);
+
             scene.getMeshByName('marker_primitive0').setEnabled(true);
             scene.getMeshByName('marker_primitive1').setEnabled(true);
         }
