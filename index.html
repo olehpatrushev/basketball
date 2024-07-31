@@ -98,7 +98,10 @@
 
                 scene.getMeshByName('ball1').setEnabled(false);
                 scene.getMeshByName('ball2').setEnabled(false);
-                
+
+                scene.getMeshByName('marker_primitive0').setEnabled(false);
+                scene.getMeshByName('marker_primitive1').setEnabled(false);
+
                 startLoop();
             });
 
@@ -117,7 +120,6 @@
         };
 
         let shotBezier = null;
-        let animationLastTime = null;
         let animationIndex = 0;
 
         // Register a render loop to repeatedly render the scene
@@ -129,18 +131,15 @@
                 //logCameraParameters(scene.activeCamera);
 
                 if (shotBezier) {
-                    if (new Date().getTime() - animationLastTime > 30) {
-                        const ball1 = scene.getMeshByName('ball1');
-                        ball1.position.copyFrom(shotBezier.getPoints()[animationIndex]);
+                    const ball1 = scene.getMeshByName('ball1');
+                    ball1.position.copyFrom(shotBezier.getPoints()[animationIndex]);
 
-                        animationIndex++;
-                        animationLastTime = new Date().getTime();
+                    animationIndex++;
 
-                        if (animationIndex >= shotBezier.getPoints().length) {
-                            shotBezier = null;
-                            animationIndex = 0;
-                            scene.getMeshByName('ball1').setEnabled(false);
-                        }
+                    if (animationIndex >= shotBezier.getPoints().length) {
+                        shotBezier = null;
+                        animationIndex = 0;
+                        scene.getMeshByName('ball1').setEnabled(false);
                     }
                 } else {
                     const x = Math.floor(Math.random() * 762 * 2) - 762;
@@ -188,6 +187,9 @@
 
             ball1.position.set(y, 0.171, x);
 
+            scene.getMeshByName('marker_primitive0').position.set(y, 0.171, x);
+            scene.getMeshByName('marker_primitive1').position.set(y, 0.171, x);
+
             const destination = new BABYLON.Vector3(12.1, 3.13, 0)
             const point1 = destination.clone().subtract(ball1.position)
             point1.y = 0;
@@ -202,14 +204,15 @@
                     control,
                     destination
                 ],
-                Math.max(parseInt(distance), 13),
+                Math.max(parseInt(distance) * 3, 30),
                 false
             );
 
-            animationLastTime = new Date().getTime();
             animationIndex = 0;
 
             scene.getMeshByName('ball1').setEnabled(true);
+            scene.getMeshByName('marker_primitive0').setEnabled(true);
+            scene.getMeshByName('marker_primitive1').setEnabled(true);
         }
     </script>
 </body>
