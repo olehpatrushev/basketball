@@ -39,11 +39,12 @@
             dynamicTexture.drawText(text, 0, 30, "bold 36px monospace", color, "transparent", true, true);
             const plane = BABYLON.MeshBuilder.CreatePlane("TextPlane", {
                 width: text.length * 0.25,
-                height: .5
+                height: 0.5
             }, scene);
             plane.material = new BABYLON.StandardMaterial("TextPlaneMaterial", scene);
             plane.material.backFaceCulling = false;
             plane.material.specularColor = new BABYLON.Color3(0, 0, 0);
+            plane.material.emissiveColor = new BABYLON.Color3(1, 1, 1);;
             plane.material.diffuseTexture = dynamicTexture;
             return plane;
         };
@@ -320,15 +321,12 @@
                 } else {
                     segmentMesh.setEnabled(true);
                     segmentMesh.position.y = stats * 0.5 - 0.25;
-                    let textColor = null;
                     if (stats < 0.5) {
                         segmentMesh.material.albedoColor.set(1, 0, 0);
-                        textColor = "red";
                     } else {
-                        segmentMesh.material.albedoColor.set(0, 1, 0);
-                        textColor = "red";
+                        segmentMesh.material.albedoColor.set(0, 0, 1);
                     }
-                    const scoreText = makeTextPlane(`${segmentData.made - segmentData.missed}/${segmentData.made}`, segmentMesh.material.albedoColor.toHexString(), 1);
+                    const scoreText = makeTextPlane(`${segmentData.made - segmentData.missed}/${segmentData.made}`, "white", 1);
                     scoreText.setParent(segmentsRoot);
                     scoreText.position.copyFrom(segmentMesh.position);
                     scoreText.position.y = 1.3;
