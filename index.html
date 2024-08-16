@@ -334,6 +334,17 @@
                 }
             }
         }
+
+        const setUpScreens = function(data = {}) {
+            for (const screenId in data) {
+                const screenMesh = scene.getMeshById(screenId);
+                if (screenMesh) {
+                    screenMesh.material.albedoTexture.updateURL(data[screenId]);
+                } else {
+                    console.warn(`"${screenId}" mesh not found`);
+                }
+            }
+        }
     </script>
 </body>
 
