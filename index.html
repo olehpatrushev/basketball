@@ -89,6 +89,8 @@
 
             // Load the GLTF model
             BABYLON.SceneLoader.Append("./", "scene.gltf", scene, function() {
+                runtime.loaded = true;
+                
                 if (!IS_DEV) {
                     // Do something with the scene after loading
                     const animation = new BABYLON.Animation("cameraAnimation", "position", 30,
@@ -190,7 +192,8 @@
             animationIndex: 0,
             shotTracer: null,
             shots: null,
-            missed: false
+            missed: false,
+            loaded: false
         };
 
         // Register a render loop to repeatedly render the scene
@@ -217,6 +220,11 @@
         });
 
         const process = function() {
+            if (!runtime.loaded) {
+                console.warn("Scene has not been loaded yet");
+                return;
+            }
+
             if (runtime.shotBezier) {
                 const ball1 = scene.getMeshByName('ball1');
                 ball1.position.copyFrom(runtime.shotBezier.getPoints()[runtime.animationIndex]);
@@ -258,15 +266,20 @@
         }
 
         const initShot = function(x, y, missed = false) {
+            if (!runtime.loaded) {
+                console.warn("Scene has not been loaded yet");
+                return;
+            }
+
             x = parseInt(x);
             y = parseInt(y);
 
             if (isNaN(x) || x <= -7620 || x >= 7620) {
-                console.warn(`x must be integer between -7620 and 7620, ${x} given`);
+                console.warn(`"x" must be integer between -7620 and 7620, ${x} given`);
                 return;
             }
             if (isNaN(y) || y <= -1220 || y >= 14210) {
-                console.warn(`y must be integer between -1220 and 14210, ${y} given`);
+                console.warn(`"y" must be integer between -1220 and 14210, ${y} given`);
                 return;
             }
 
@@ -326,6 +339,11 @@
         }
 
         const setUpSegments = function(data = {}) {
+            if (!runtime.loaded) {
+                console.warn("Scene has not been loaded yet");
+                return;
+            }
+
             for (let i = 1; i <= 14; i++) {
                 scene.getMeshByName('segment_' + i).setEnabled(false);
             }
@@ -357,6 +375,11 @@
         }
 
         const setUpScreens = function(data = {}) {
+            if (!runtime.loaded) {
+                console.warn("Scene has not been loaded yet");
+                return;
+            }
+
             for (const screenId in data) {
                 const screenMesh = scene.getMeshById(screenId);
                 if (screenMesh) {
@@ -368,7 +391,12 @@
         }
 
         const loadData = function(gameEventId, type) {
-            const url = `http://shotv1.4natic.online/v1/data/stats/games/${gameEventId}/shots`;
+            if (!runtime.loaded) {
+                console.warn("Scene has not been loaded yet");
+                return;
+            }
+
+            const url = `//shotv1.4natic.online/v1/data/stats/games/${gameEventId}/shots`;
             const data = fetch(url)
                 .then((response) => response.json())
                 .then((responseData) => {
