@@ -248,8 +248,8 @@
                     }
                 }
             } else if (runtime.shots) {
-                if (runtime.shots.shots.length) {
-                    const shot = runtime.shots.shots.shift();
+                if (runtime.shots.length) {
+                    const shot = runtime.shots.shift();
                     initShot(shot.hsx, shot.hsy, shot.st == "MISS");
                 } else {
                     runtime.shots = null;
@@ -368,15 +368,31 @@
         }
 
         const loadData = function(gameEventId, type) {
-            const url = `http://shotv1.4natic.online/v1/data/stats/games/b0edea70-22e1-11eb-b93a-02420c129761/shots`;
+            const url = `http://shotv1.4natic.online/v1/data/stats/games/${gameEventId}/shots`;
             const data = fetch(url)
                 .then((response) => response.json())
                 .then((responseData) => {
                     if (type == 'shots') {
-                        runtime.shots = responseData;
-                        console.log(runtime.shots);
+                        setUpSegments();
+                        runtime.shots = responseData.shots;
                     } else if (type == 'zones') {
+                        let data = {};
 
+                        responseData.shots.every((shot) => {
+                            if (!("segment_" + shot.z in data)) {
+                                data["segment_" + shot.z] = {
+                                    missed: 0,
+                                    made: 0
+                                };
+                            }
+                            if (shot.st == "MISS") {
+                                data["segment_" + shot.z].missed++;
+                            }
+                            data["segment_" + shot.z].made++;
+                            return true;
+                        });
+
+                        setUpSegments(data);
                     }
                 });
         }
