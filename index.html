@@ -185,50 +185,22 @@
             console.log("Camera Target:", camera.target);
         };
 
-        let shotBezier = null;
-        let animationIndex = 0;
-        let shotTracer = null;
+        let runtime = {
+            shotBezier: null,
+            animationIndex: 0,
+            shotTracer: null,
+            shots: null,
+            missed: false
+        };
 
         // Register a render loop to repeatedly render the scene
         const startLoop = () => {
             engine.runRenderLoop(function() {
+                process();
+
                 scene.render();
 
                 //logCameraParameters(scene.activeCamera);
-
-                if (shotBezier) {
-                    const ball1 = scene.getMeshByName('ball1');
-                    ball1.position.copyFrom(shotBezier.getPoints()[animationIndex]);
-
-                    animationIndex++;
-
-                    if (animationIndex >= shotBezier.getPoints().length) {
-                        shotBezier = null;
-                        animationIndex = 0;
-                        scene.getMeshByName('ball1').setEnabled(false);
-                    }
-
-                    if (shotBezier) {
-                        if (shotTracer) {
-                            scene.removeMesh(shotTracer, true);
-                        }
-
-                        if (animationIndex > 0) {
-                            const ball1Matrix = ball1.getWorldMatrix();
-
-                            shotTracer = BABYLON.Mesh.CreateLines("shotTracer", [...shotBezier.getPoints()].splice(0, animationIndex));
-                            shotTracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
-                            shotTracer.color = new BABYLON.Color3(0, 1, 0);
-
-                            shotTracer.updatePoseMatrix(ball1Matrix);
-                            shotTracer.scaling.z = -1;
-                        }
-                    }
-                } else {
-                    const x = Math.floor(Math.random() * 762 * 2) - 762;
-                    const y = Math.floor(Math.random() * 1543) - 122;
-                    initShot(x, y);
-                }
             });
         }
 
@@ -244,25 +216,64 @@
             }
         });
 
-        const initShot = function(x, y, convert = true) {
-            if (convert) {
-                x = parseInt(x);
-                y = parseInt(y);
+        const process = function() {
+            if (runtime.shotBezier) {
+                const ball1 = scene.getMeshByName('ball1');
+                ball1.position.copyFrom(runtime.shotBezier.getPoints()[runtime.animationIndex]);
 
-                if (isNaN(x) || x < -762 || x > 762) {
-                    console.warn(`x must be integer between -762 and 762`);
-                    return;
+                runtime.animationIndex++;
+
+                if (runtime.animationIndex >= runtime.shotBezier.getPoints().length) {
+                    runtime.shotBezier = null;
+                    runtime.animationIndex = 0;
+                    scene.getMeshByName('ball1').setEnabled(false);
+                    scene.getMeshByName('marker_primitive0').setEnabled(false);
+                    scene.getMeshByName('marker_primitive1').setEnabled(false);
                 }
-                if (isNaN(y) || y < -122 || y > 1421) {
-                    console.warn(`y must be integer between -122 and 1421`);
-                    return;
+
+                if (runtime.shotTracer) {
+                    scene.removeMesh(runtime.shotTracer, true);
                 }
 
-                x = x / 100;
-                y = y / 100;
+                if (runtime.animationIndex > 0) {
+                    const ball1Matrix = ball1.getWorldMatrix();
 
-                y = 12.1 - y;
+                    if (!runtime.missed) {
+                        runtime.shotTracer = BABYLON.Mesh.CreateLines("shotTracer", [...runtime.shotBezier.getPoints()].splice(0, runtime.animationIndex));
+                        runtime.shotTracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
+                        runtime.shotTracer.color = new BABYLON.Color3(0, 1, 0);
+
+                        runtime.shotTracer.updatePoseMatrix(ball1Matrix);
+                        runtime.shotTracer.scaling.z = -1;
+                    }
+                }
+            } else if (runtime.shots) {
+                if (runtime.shots.shots.length) {
+                    const shot = runtime.shots.shots.shift();
+                    initShot(shot.hsx, shot.hsy, shot.st == "MISS");
+                } else {
+                    runtime.shots = null;
+                }
             }
+        }
+
+        const initShot = function(x, y, missed = false) {
+            x = parseInt(x);
+            y = parseInt(y);
+
+            if (isNaN(x) || x <= -7620 || x >= 7620) {
+                console.warn(`x must be integer between -7620 and 7620, ${x} given`);
+                return;
+            }
+            if (isNaN(y) || y <= -1220 || y >= 14210) {
+                console.warn(`y must be integer between -1220 and 14210, ${y} given`);
+                return;
+            }
+
+            x = x / 1000;
+            y = y / 1000;
+
+            y = 12.1 - y;
 
             if (IS_DEV) {
                 x = 0;
@@ -286,7 +297,7 @@
             const control = destination.clone().subtract(point1)
             control.y = Math.max(6, distance / 3);
 
-            shotBezier = BABYLON.Curve3.CreateCatmullRomSpline(
+            runtime.shotBezier = BABYLON.Curve3.CreateCatmullRomSpline(
                 [
                     ball1.position,
                     control,
@@ -296,12 +307,22 @@
                 false
             );
 
-            animationIndex = 0;
+            runtime.animationIndex = 0;
 
             ball1.setEnabled(true);
 
             scene.getMeshByName('marker_primitive0').setEnabled(true);
             scene.getMeshByName('marker_primitive1').setEnabled(true);
+
+            if (missed) {
+                scene.getMeshByName('marker_primitive0').material.albedoColor.set(1, 0, 0);
+                scene.getMeshByName('marker_primitive0').material.emissiveColor.set(1, 0, 0);
+            } else {
+                scene.getMeshByName('marker_primitive0').material.albedoColor.set(0, 1, 0);
+                scene.getMeshByName('marker_primitive0').material.emissiveColor.set(0, 1, 0);
+            }
+
+            runtime.missed = missed;
         }
 
         const setUpSegments = function(data = {}) {
@@ -344,6 +365,20 @@
                     console.warn(`"${screenId}" mesh not found`);
                 }
             }
+        }
+
+        const loadData = function(gameEventId, type) {
+            const url = `http://shotv1.4natic.online/v1/data/stats/games/b0edea70-22e1-11eb-b93a-02420c129761/shots`;
+            const data = fetch(url)
+                .then((response) => response.json())
+                .then((responseData) => {
+                    if (type == 'shots') {
+                        runtime.shots = responseData;
+                        console.log(runtime.shots);
+                    } else if (type == 'zones') {
+
+                    }
+                });
         }
     </script>
 </body>
