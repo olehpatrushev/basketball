@@ -90,7 +90,7 @@
             // Load the GLTF model
             BABYLON.SceneLoader.Append("./", "scene.gltf", scene, function() {
                 runtime.loaded = true;
-                
+
                 if (!IS_DEV) {
                     // Do something with the scene after loading
                     const animation = new BABYLON.Animation("cameraAnimation", "position", 30,
@@ -293,14 +293,17 @@
                 y = 10;
             }
 
-            const distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y - 12.1, 2));
-
-            const ball1 = scene.getMeshByName('ball1');
-
-            ball1.position.set(y, 0.13, x);
-
             scene.getMeshByName('marker_primitive0').position.set(y, 0.13, x);
             scene.getMeshByName('marker_primitive1').position.set(y, 0.13, x);
+
+            const ball1 = scene.getMeshByName('ball1');
+            ball1.position.set(y, 0.13, x);
+
+            if (!missed) {
+                ball1.setEnabled(true);
+            }
+
+            const distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y - 12.1, 2));
 
             const destination = new BABYLON.Vector3(12.1, 3.13, 0)
             const point1 = destination.clone().subtract(ball1.position)
@@ -321,8 +324,6 @@
             );
 
             runtime.animationIndex = 0;
-
-            ball1.setEnabled(true);
 
             scene.getMeshByName('marker_primitive0').setEnabled(true);
             scene.getMeshByName('marker_primitive1').setEnabled(true);
