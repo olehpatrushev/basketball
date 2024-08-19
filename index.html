@@ -84,8 +84,9 @@
             const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
             light.intensity = 0.7;
 
+            const markersRoot = new BABYLON.TransformNode("markersRoot", scene);
+
             const segmentsRoot = new BABYLON.TransformNode("segmentsRoot", scene);
-            segmentsRoot.scaling.x = -1;
 
             // Load the GLTF model
             BABYLON.SceneLoader.Append("./", "scene.gltf", scene, function() {
@@ -149,9 +150,6 @@
                 scene.getMeshByName('ball1').setEnabled(false);
                 scene.getMeshByName('ball2').setEnabled(false);
 
-                scene.getMeshByName('marker_primitive0').setEnabled(false);
-                scene.getMeshByName('marker_primitive1').setEnabled(false);
-
                 for (let i = 1; i <= 14; i++) {
                     scene.getMeshByName('segment_' + i).setEnabled(false);
                 }
@@ -188,11 +186,9 @@
         };
 
         let runtime = {
-            shotBezier: null,
-            animationIndex: 0,
-            shotTracer: null,
-            shots: null,
-            missed: false,
+            shots: [
+
+            ],
             loaded: false
         };
 
@@ -225,67 +221,66 @@
                 return;
             }
 
-            if (runtime.shotBezier) {
-                const ball1 = scene.getMeshByName('ball1');
-                ball1.position.copyFrom(runtime.shotBezier.getPoints()[runtime.animationIndex]);
+            runtime.shots.every((shot) => {
+                const newPosition = shot.curve.getPoints()[shot.animationIndex];
+                shot.animationIndex++;
 
-                runtime.animationIndex++;
-
-                if (runtime.animationIndex >= runtime.shotBezier.getPoints().length) {
-                    runtime.shotBezier = null;
-                    runtime.animationIndex = 0;
-                    scene.getMeshByName('ball1').setEnabled(false);
-                    scene.getMeshByName('marker_primitive0').setEnabled(false);
-                    scene.getMeshByName('marker_primitive1').setEnabled(false);
+                if (shot.animationIndex >= shot.curve.getPoints().length) {
+                    shot.animationIndex = 0;
                 }
 
-                if (runtime.shotTracer) {
-                    scene.removeMesh(runtime.shotTracer, true);
-                }
-
-                if (runtime.animationIndex > 0) {
-                    const ball1Matrix = ball1.getWorldMatrix();
-
-                    if (!runtime.missed) {
+                if (shot.animationIndex > 0) {
+                    if (!shot.missed) {
                         const contour = generateCircle(0.06, 0.06, 6, 'xy');
-                        let path = [...runtime.shotBezier.getPoints()].splice(0, runtime.animationIndex);
+                        let path = [...shot.curve.getPoints()].splice(0, shot.animationIndex);
                         if (path.length > 1) {
                             if (path.length > 13) {
                                 path = path.splice(-13);
                             }
-                            runtime.shotTracer = BABYLON.MeshBuilder.ExtrudeShape('ext0', {
+
+                            if (shot.tracer) {
+                                scene.removeMesh(shot.tracer, true);
+                            }
+
+                            shot.tracer = BABYLON.MeshBuilder.ExtrudeShape('ext0', {
                                 shape: contour,
                                 path: path
                             });
 
-                            runtime.shotTracer.material = new BABYLON.StandardMaterial("trackMat", scene);
-                            runtime.shotTracer.material.diffuseColor = BABYLON.Color3.Green();
-                            runtime.shotTracer.material.emissiveColor = BABYLON.Color3.Green();
+                            shot.tracer.material = new BABYLON.StandardMaterial("trackMat", scene);
+                            shot.tracer.material.diffuseColor = BABYLON.Color3.Green();
+                            shot.tracer.material.emissiveColor = BABYLON.Color3.Green();
 
-                            runtime.shotTracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
-                            runtime.shotTracer.updatePoseMatrix(ball1Matrix);
-                            runtime.shotTracer.scaling.z = -1;
+                            shot.tracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
                         }
                     }
                 }
-            } else if (runtime.shots) {
-                if (runtime.shots.length) {
-                    const shot = runtime.shots.shift();
-                    initShot(shot.hsx, shot.hsy, shot.st == "MISS");
-                } else {
-                    runtime.shots = null;
-                }
-            }
+
+                return true;
+            });
         }
 
-        const initShot = function(x, y, missed = false) {
+        const prepareShot = function(shotData = {}) {
             if (!runtime.loaded) {
                 console.warn("Scene has not been loaded yet");
                 return;
             }
 
-            x = parseInt(x);
-            y = parseInt(y);
+            let shot = {
+                animationIndex: 0,
+                missed: null,
+                curve: null,
+                marker: null,
+                tracer: null
+            };
+
+            if (!runtime.loaded) {
+                console.warn("Scene has not been loaded yet");
+                return;
+            }
+
+            let x = parseInt(shotData.hsx);
+            let y = parseInt(shotData.hsy);
 
             if (isNaN(x) || x <= -7620 || x >= 7620) {
                 console.warn(`"x" must be integer between -7620 and 7620, ${x} given`);
@@ -301,34 +296,46 @@
 
             y = 12.1 - y;
 
-            if (IS_DEV) {
-                x = 0;
-                y = 10;
+            shot.missed = shotData.st == "MISS";
+
+            let markerMaterial = new BABYLON.StandardMaterial("shotMat");
+
+            let texture;
+
+            if (shot.missed) {
+                texture = new BABYLON.Texture("./tex/red_marker.png")
+            } else {
+                texture = new BABYLON.Texture("./tex/green_marker.png")
             }
 
-            scene.getMeshByName('marker_primitive0').position.set(y, 0.13, x);
-            scene.getMeshByName('marker_primitive1').position.set(y, 0.13, x);
+            markerMaterial.diffuseTexture = markerMaterial.opacityTexture = markerMaterial.emissiveTexture = texture;
 
-            const ball1 = scene.getMeshByName('ball1');
-            ball1.position.set(y, 0.13, x);
+            const markersRoot = scene.getNodeById("markersRoot");
+            const marker = BABYLON.MeshBuilder.CreatePlane("marker", {
+                width: 1,
+                height: 1
+            }, scene);
 
-            if (!missed) {
-                ball1.setEnabled(true);
-            }
+            marker.material = markerMaterial;
+            marker.position.set(-y, 0.13, -x);
+            marker.setParent(markersRoot);
+            marker.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.LOCAL);
 
+            shot.marker = marker;
+
+            const position = newV(y, 0.13, x);
             const distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y - 12.1, 2));
-
             const destination = new BABYLON.Vector3(12.1, 3.13, 0)
-            const point1 = destination.clone().subtract(ball1.position)
+            const point1 = destination.clone().subtract(position)
             point1.y = 0;
             point1.normalize()
             point1.scaleInPlace(distance * .3)
             const control = destination.clone().subtract(point1)
             control.y = Math.max(6, distance / 3);
 
-            runtime.shotBezier = BABYLON.Curve3.CreateCatmullRomSpline(
+            shot.curve = BABYLON.Curve3.CreateCatmullRomSpline(
                 [
-                    ball1.position,
+                    position,
                     control,
                     destination
                 ],
@@ -336,20 +343,25 @@
                 false
             );
 
-            runtime.animationIndex = 0;
+            return shot;
+        }
 
-            scene.getMeshByName('marker_primitive0').setEnabled(true);
-            scene.getMeshByName('marker_primitive1').setEnabled(true);
-
-            if (missed) {
-                scene.getMeshByName('marker_primitive0').material.albedoColor.set(1, 0, 0);
-                scene.getMeshByName('marker_primitive0').material.emissiveColor.set(1, 0, 0);
-            } else {
-                scene.getMeshByName('marker_primitive0').material.albedoColor.set(0, 1, 0);
-                scene.getMeshByName('marker_primitive0').material.emissiveColor.set(0, 1, 0);
+        const clearShots = function() {
+            if (!runtime.loaded) {
+                console.warn("Scene has not been loaded yet");
+                return;
             }
 
-            runtime.missed = missed;
+            runtime.shots.every((shot) => {
+                if (shot.tracer) {
+                    scene.removeMesh(shot.tracer, true);
+                }
+
+                if (shot.marker) {
+                    scene.removeMesh(shot.marker, true);
+                }
+                return true;
+            });
         }
 
         const setUpSegments = function(data = {}) {
@@ -383,6 +395,7 @@
                     scoreText.setParent(segmentsRoot);
                     scoreText.position.copyFrom(segmentMesh.position);
                     scoreText.position.y = 1.3;
+                    scoreText.position.x *= -1;
                     scoreText.rotate(BABYLON.Axis.Y, -Math.PI / 2, BABYLON.Space.LOCAL);
                 }
             }
@@ -416,7 +429,8 @@
                 .then((responseData) => {
                     if (type == 'shots') {
                         setUpSegments();
-                        runtime.shots = responseData.shots;
+                        clearShots();
+                        runtime.shots = responseData.shots.map((shot) => prepareShot(shot))
                     } else if (type == 'zones') {
                         let data = {};
 
@@ -458,11 +472,11 @@
             return p;
         }
 
-        function newV(x = 0, y = 0, z = 0) {
+        const newV = function(x = 0, y = 0, z = 0) {
             return new BABYLON.Vector3(x, y, z);
         }
 
-        function dround(f, d) {
+        const dround = function(f, d) {
             d = Math.round(d);
             if (d < -15 || d > 15) {
                 return f;
@@ -475,7 +489,7 @@
             return Math.round(ff) / s;
         }
 
-        function vround(v, d) {
+        const vround = function(v, d) {
             let va = [];
             v.toArray(va);
             va.forEach((e, ndx) => {
