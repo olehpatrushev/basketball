@@ -247,12 +247,25 @@
                     const ball1Matrix = ball1.getWorldMatrix();
 
                     if (!runtime.missed) {
-                        runtime.shotTracer = BABYLON.Mesh.CreateLines("shotTracer", [...runtime.shotBezier.getPoints()].splice(0, runtime.animationIndex));
-                        runtime.shotTracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
-                        runtime.shotTracer.color = new BABYLON.Color3(0, 1, 0);
+                        const contour = generateCircle(0.06, 0.06, 6, 'xy');
+                        let path = [...runtime.shotBezier.getPoints()].splice(0, runtime.animationIndex);
+                        if (path.length > 1) {
+                            if (path.length > 13) {
+                                path = path.splice(-13);
+                            }
+                            runtime.shotTracer = BABYLON.MeshBuilder.ExtrudeShape('ext0', {
+                                shape: contour,
+                                path: path
+                            });
 
-                        runtime.shotTracer.updatePoseMatrix(ball1Matrix);
-                        runtime.shotTracer.scaling.z = -1;
+                            runtime.shotTracer.material = new BABYLON.StandardMaterial("trackMat", scene);
+                            runtime.shotTracer.material.diffuseColor = BABYLON.Color3.Green();
+                            runtime.shotTracer.material.emissiveColor = BABYLON.Color3.Green();
+
+                            runtime.shotTracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
+                            runtime.shotTracer.updatePoseMatrix(ball1Matrix);
+                            runtime.shotTracer.scaling.z = -1;
+                        }
                     }
                 }
             } else if (runtime.shots) {
@@ -424,6 +437,51 @@
                         setUpSegments(data);
                     }
                 });
+        }
+
+        const generateCircle = function(r1 = 0.5, r2 = 0.5, q = 12, plane = 'xy') {
+            var p = [];
+            let a = 2 * Math.PI / q; // arc of each section
+            let b = 3 * a / 2; //offset
+            for (let i = 0; i < q; i++) {
+                let v;
+                if (plane == 'xy') {
+                    v = newV(r1 * Math.cos(i * a), r2 * Math.sin(i * a), 0)
+                } else if (plane == 'xz') {
+                    v = newV(r1 * Math.cos(i * a + b), 0, r2 * Math.sin(i * a + b))
+                } else {
+                    console.warn('plane is ' + plane)
+                }
+                p.push(vround(v, 3));
+            }
+            p.push(p[0]);
+            return p;
+        }
+
+        function newV(x = 0, y = 0, z = 0) {
+            return new BABYLON.Vector3(x, y, z);
+        }
+
+        function dround(f, d) {
+            d = Math.round(d);
+            if (d < -15 || d > 15) {
+                return f;
+            }
+            if (d == 0) {
+                return Math.round(f);
+            }
+            let s = Math.pow(10, d);
+            let ff = s * f;
+            return Math.round(ff) / s;
+        }
+
+        function vround(v, d) {
+            let va = [];
+            v.toArray(va);
+            va.forEach((e, ndx) => {
+                va[ndx] = dround(va[ndx], d);
+            })
+            return v.fromArray(va);
         }
     </script>
 </body>
