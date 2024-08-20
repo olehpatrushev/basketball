@@ -30,7 +30,7 @@
 
         let camera; // Declare camera variable in global scope
 
-        const IS_DEV = false;
+        const IS_DEV = true;
 
         const makeTextPlane = function(text, color) {
             const dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {
@@ -367,6 +367,8 @@
                 }
                 return true;
             });
+            
+            runtime.shots = [];
         }
 
         const setUpSegments = function(data = {}) {
