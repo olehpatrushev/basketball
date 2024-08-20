@@ -22,6 +22,8 @@
         //window.addEventListener('DOMContentLoaded', function () {
         // Get the canvas element
         const canvas = document.getElementById('renderCanvas');
+        
+        const mainColor = '#00f6ff';
 
         // Generate the Babylon.js engine
         const engine = new BABYLON.Engine(canvas, true);
@@ -102,17 +104,17 @@
                     keys.push({
                         frame: 0,
                         //value: new BABYLON.Vector3(1.9, 3.6, 9.8) // Starting position
-                        value: new BABYLON.Vector3(5, 10, 10) // Starting position
+                        value: new BABYLON.Vector3(5, 3.5, 10) // Starting position
                     });
                     keys.push({
-                        frame: 100,
+                        frame: 300,
                         //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
-                        value: new BABYLON.Vector3(10, 10, -10) // Ending position
+                        value: new BABYLON.Vector3(10, 4, -10) // Ending position
                     });
                     keys.push({
-                        frame: 200,
+                        frame: 600,
                         //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
-                        value: new BABYLON.Vector3(5, 10, 10) // Starting position
+                        value: new BABYLON.Vector3(5, 3.5, 10) // Starting position
                     });
 
                     animation.setKeys(keys);
@@ -130,13 +132,14 @@
                         value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
                     });
                     targetKeys.push({
-                        frame: 100,
+                        frame: 300,
                         value: new BABYLON.Vector3(-7, 0.5, 0.8) // Ending target
                     });
                     targetKeys.push({
-                        frame: 200,
+                        frame: 600,
                         value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
                     });
+
 
                     targetAnimation.setKeys(targetKeys);
 
@@ -144,7 +147,7 @@
                     camera.animations.push(targetAnimation);
 
                     // Run the animation
-                    scene.beginAnimation(camera, 0, 200, true);
+                    scene.beginAnimation(camera, 0, 600, true);
                 }
 
                 scene.getMeshByName('ball1').setEnabled(false);
@@ -170,6 +173,8 @@
                         "made": 10
                     }
                 })
+                
+                loadData("b0edea70-22e1-11eb-b93a-02420c129761", "shots");
 
                 startLoop();
             });
@@ -248,8 +253,8 @@
                             });
 
                             shot.tracer.material = new BABYLON.StandardMaterial("trackMat", scene);
-                            shot.tracer.material.diffuseColor = BABYLON.Color3.Green();
-                            shot.tracer.material.emissiveColor = BABYLON.Color3.Green();
+                            shot.tracer.material.diffuseColor = BABYLON.Color3.FromHexString(mainColor);
+                            shot.tracer.material.emissiveColor = BABYLON.Color3.FromHexString(mainColor);
 
                             shot.tracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
                         }
