@@ -30,7 +30,7 @@
 
         let camera; // Declare camera variable in global scope
 
-        const IS_DEV = true;
+        const IS_DEV = false;
 
         const makeTextPlane = function(text, color) {
             const dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {
@@ -296,10 +296,10 @@
                 return;
             }
 
-            x = x / 1000;
-            y = y / 1000;
+            x = x / 1080;
+            y = (y + 1220) / 1150;
 
-            y = 12.1 - y;
+            y = 13.374 - y;
 
             shot.missed = shotData.st == "MISS";
 
@@ -478,8 +478,10 @@
             ctx.font = '309px "KenyanCoffeeRg-BoldItalic"';
             ctx.strokeStyle = "#00f6ff";
             ctx.lineWidth = 6;
-            ctx.shadowOffsetX = 7;
-            ctx.shadowOffsetY = 7;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.shadowColor = "#00f6ff";
+            ctx.shadowBlur = 30;
             ctx.strokeText(data.text2 || "", 1127, 600);
 
             // Draw Player Number
