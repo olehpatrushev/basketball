@@ -22,7 +22,7 @@
         //window.addEventListener('DOMContentLoaded', function () {
         // Get the canvas element
         const canvas = document.getElementById('renderCanvas');
-        
+
         const mainColor = '#00f6ff';
 
         // Generate the Babylon.js engine
@@ -173,7 +173,7 @@
                         "made": 10
                     }
                 })
-                
+
                 loadData("b0edea70-22e1-11eb-b93a-02420c129761", "shots");
 
                 startLoop();
@@ -367,7 +367,7 @@
                 }
                 return true;
             });
-            
+
             runtime.shots = [];
         }
 
@@ -418,10 +418,102 @@
                 const screenMesh = scene.getMeshById(screenId);
                 if (screenMesh) {
                     screenMesh.material.albedoTexture.updateURL(data[screenId]);
+                    screenMesh.material.emissiveTexture.updateURL(data[screenId]);
                 } else {
                     console.warn(`"${screenId}" mesh not found`);
                 }
             }
+        }
+
+        const setUpMainScreen = async function(data = {
+            text1: "Text1",
+            text2: "Text2",
+            text3: "Text3",
+            text4: "Text4",
+            text5: "Text5",
+            text6: "Text6",
+            backgroundImgUrl: null,
+            teamLogoBackgroundImgUrl: null,
+            playerImgUrl: null
+
+        }) {
+            const font1 = new FontFace("KenyanCoffeeRg-BoldItalic", "url('./fonts/kenyan_coffee_bd_it-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd_it-webfont.woff') format('woff')");
+            const font2 = new FontFace("KenyanCoffeeRg-Bold", "url('./fonts/kenyan_coffee_bd-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd-webfont.woff') format('woff')");
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 3840;
+            canvas.height = 1080;
+            const ctx = canvas.getContext('2d');
+
+            // Draw Background
+            const backgroundImg = new Image();
+            backgroundImg.crossOrigin = "anonymous";
+            backgroundImg.src = data.backgroundImgUrl || './tex/main_screen_background.png';
+            await backgroundImg.decode();
+            ctx.drawImage(backgroundImg, 0, 0, 3840, 1080);
+            // Draw Player Background
+            const teamLogoBgImg = new Image();
+            teamLogoBgImg.crossOrigin = "anonymous";
+            teamLogoBgImg.src = data.teamLogoBackgroundImgUrl || './tex/main_screen_teamlogo_background.png';
+            await teamLogoBgImg.decode();
+            ctx.globalAlpha = 0.59;
+            ctx.drawImage(teamLogoBgImg, 1153, 432, 656, 659);
+            ctx.globalAlpha = 1.0;
+
+            await font1.load();
+            document.fonts.add(font1);
+            console.log('Font loaded');
+
+            // Draw First Name
+            ctx.font = '257px "KenyanCoffeeRg-BoldItalic"';
+            ctx.fillStyle = "#FFFFFF";
+            ctx.textAlign = "left";
+            ctx.shadowColor = "rgba(2,11,57,0.33)";
+            ctx.shadowOffsetX = 27;
+            ctx.shadowOffsetY = 27;
+            ctx.shadowBlur = 0;
+            ctx.fillText(data.text1 || "", 1180, 336);
+
+            // Draw Last Name
+            ctx.font = '309px "KenyanCoffeeRg-BoldItalic"';
+            ctx.strokeStyle = "#00f6ff";
+            ctx.lineWidth = 6;
+            ctx.shadowOffsetX = 7;
+            ctx.shadowOffsetY = 7;
+            ctx.strokeText(data.text2 || "", 1127, 600);
+
+            // Draw Player Number
+            ctx.font = '556px "KenyanCoffeeRg-BoldItalic"';
+            ctx.strokeStyle = "#00f6ff";
+            ctx.lineWidth = 6;
+            ctx.strokeText(data.text3 || "", 647, 576);
+
+            await font2.load();
+            document.fonts.add(font2);
+            console.log('Font loaded');
+
+            // Draw Stats
+            ctx.font = '288px "KenyanCoffeeRg-Bold"';
+            ctx.fillStyle = "#FFFFFF";
+            ctx.shadowColor = "rgba(2,11,57,0.33)";
+            ctx.shadowOffsetX = 27;
+            ctx.shadowOffsetY = 27;
+            ctx.shadowBlur = 0;
+            ctx.fillText(data.text4 || "", 3100, 380);
+            ctx.fillText(data.text5 || "", 3100, 676);
+            ctx.fillText(data.text6 || "", 3100, 959);
+
+            // Draw Player Image
+            const playerImg = new Image();
+            playerImg.crossOrigin = "anonymous";
+            playerImg.src = data.playerImgUrl || './tex/main_screen_playerimage.png';
+            await playerImg.decode();
+            ctx.drawImage(playerImg, -7, -6, 1336, 1130);
+
+            const screenMesh = scene.getMeshById("screen_1");
+            const base64 = canvas.toDataURL();
+            screenMesh.material.albedoTexture.updateURL(base64);
+            screenMesh.material.emissiveTexture.updateURL(base64);
         }
 
         const loadData = function(gameEventId, type) {
