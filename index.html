@@ -29,8 +29,12 @@
         const engine = new BABYLON.Engine(canvas, true);
 
         let camera; // Declare camera variable in global scope
+        let IS_DEV = false;
 
-        const IS_DEV = false;
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('IS_DEV')) {
+            IS_DEV = true;
+        }
 
         const makeTextPlane = function(text, color) {
             const dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {
@@ -91,93 +95,98 @@
             const segmentsRoot = new BABYLON.TransformNode("segmentsRoot", scene);
 
             // Load the GLTF model
-            BABYLON.SceneLoader.Append("./", "scene.gltf", scene, function() {
-                runtime.loaded = true;
+            BABYLON.SceneLoader.Append("./", "scene.gltf" + (IS_DEV ? "?time=" + (new Date()).getTime() : ""), scene,
+                function() {
+                    runtime.loaded = true;
 
-                if (!IS_DEV) {
-                    // Do something with the scene after loading
-                    const animation = new BABYLON.Animation("cameraAnimation", "position", 30,
-                        BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+                    if (!IS_DEV) {
+                        // Do something with the scene after loading
+                        const animation = new BABYLON.Animation("cameraAnimation", "position", 30,
+                            BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
 
-                    // Animation keys
-                    const keys = [];
-                    keys.push({
-                        frame: 0,
-                        //value: new BABYLON.Vector3(1.9, 3.6, 9.8) // Starting position
-                        value: new BABYLON.Vector3(5, 3.5, 10) // Starting position
-                    });
-                    keys.push({
-                        frame: 300,
-                        //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
-                        value: new BABYLON.Vector3(10, 4, -10) // Ending position
-                    });
-                    keys.push({
-                        frame: 600,
-                        //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
-                        value: new BABYLON.Vector3(5, 3.5, 10) // Starting position
-                    });
+                        // Animation keys
+                        const keys = [];
+                        keys.push({
+                            frame: 0,
+                            //value: new BABYLON.Vector3(1.9, 3.6, 9.8) // Starting position
+                            value: new BABYLON.Vector3(5, 3.5, 10) // Starting position
+                        });
+                        keys.push({
+                            frame: 300,
+                            //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
+                            value: new BABYLON.Vector3(10, 4, -10) // Ending position
+                        });
+                        keys.push({
+                            frame: 600,
+                            //value: new BABYLON.Vector3(1.6, 10.3, 2) // Ending position
+                            value: new BABYLON.Vector3(5, 3.5, 10) // Starting position
+                        });
 
-                    animation.setKeys(keys);
+                        animation.setKeys(keys);
 
-                    // Attach the animation to the camera
-                    camera.animations.push(animation);
+                        // Attach the animation to the camera
+                        camera.animations.push(animation);
 
-                    // Create an animation for the camera's target
-                    const targetAnimation = new BABYLON.Animation("cameraTargetAnimation", "target", 30,
-                        BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+                        // Create an animation for the camera's target
+                        const targetAnimation = new BABYLON.Animation("cameraTargetAnimation", "target", 30,
+                            BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
 
-                    const targetKeys = [];
-                    targetKeys.push({
-                        frame: 0,
-                        value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
-                    });
-                    targetKeys.push({
-                        frame: 300,
-                        value: new BABYLON.Vector3(-7, 0.5, 0.8) // Ending target
-                    });
-                    targetKeys.push({
-                        frame: 600,
-                        value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
-                    });
+                        const targetKeys = [];
+                        targetKeys.push({
+                            frame: 0,
+                            value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
+                        });
+                        targetKeys.push({
+                            frame: 300,
+                            value: new BABYLON.Vector3(-7, 0.5, 0.8) // Ending target
+                        });
+                        targetKeys.push({
+                            frame: 600,
+                            value: new BABYLON.Vector3(-8.5, 0.5, 0.8) // Starting target
+                        });
 
 
-                    targetAnimation.setKeys(targetKeys);
+                        targetAnimation.setKeys(targetKeys);
 
-                    // Attach the animation to the camera
-                    camera.animations.push(targetAnimation);
+                        // Attach the animation to the camera
+                        camera.animations.push(targetAnimation);
 
-                    // Run the animation
-                    scene.beginAnimation(camera, 0, 600, true);
-                }
-
-                scene.getMeshByName('ball1').setEnabled(false);
-                scene.getMeshByName('ball2').setEnabled(false);
-
-                for (let i = 1; i <= 14; i++) {
-                    scene.getMeshByName('segment_' + i).setEnabled(false);
-                }
-
-                IS_DEV && showAxis(100);
-
-                IS_DEV && setUpSegments({
-                    "segment_1": {
-                        "missed": 10,
-                        "made": 20
-                    },
-                    "segment_2": {
-                        "missed": 0,
-                        "made": 10
-                    },
-                    "segment_3": {
-                        "missed": 10,
-                        "made": 10
+                        // Run the animation
+                        scene.beginAnimation(camera, 0, 600, true);
                     }
-                })
 
-                loadData("b0edea70-22e1-11eb-b93a-02420c129761", "shots");
+                    scene.getMeshByName('ball1').setEnabled(false);
+                    scene.getMeshByName('ball2').setEnabled(false);
 
-                startLoop();
-            });
+                    for (let i = 1; i <= 14; i++) {
+                        scene.getMeshByName('segment_' + i).setEnabled(false);
+                    }
+
+                    IS_DEV && showAxis(100);
+
+                    IS_DEV && setUpSegments({
+                        "segment_1": {
+                            "missed": 10,
+                            "made": 20
+                        },
+                        "segment_2": {
+                            "missed": 0,
+                            "made": 10
+                        },
+                        "segment_3": {
+                            "missed": 10,
+                            "made": 10
+                        }
+                    })
+
+                    scene.getMeshByName('upper_wall').material.albedoColor = BABYLON.Color3.FromHexString(mainColor);
+                    scene.getMeshByName('seats').material.albedoColor = BABYLON.Color3.FromHexString(mainColor);
+                    scene.getMeshByName('blue_wall').material.albedoColor = BABYLON.Color3.FromHexString(mainColor);
+
+                    loadData("b0edea70-22e1-11eb-b93a-02420c129761", "shots");
+
+                    startLoop();
+                });
 
             return scene;
         })();
