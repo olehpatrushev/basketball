@@ -285,35 +285,44 @@
 
             runtime.shots.every((shot) => {
                 const newPosition = shot.curve.getPoints()[shot.animationIndex];
-                shot.animationIndex++;
 
-                if (shot.animationIndex >= shot.curve.getPoints().length) {
-                    shot.animationIndex = 0;
-                }
+                if (!shot.missed) {
+                    if (shot.animationIndex >= shot.curve.getPoints().length) {
+                        if (shot.tracer) {
+                            scene.removeMesh(shot.tracer, true);
+                            shot.tracer = null;
+                        }
+                        if (Math.random() > 0.9) {
+                            shot.animationIndex = 0;
+                            console.log(1);
+                        }
+                    } else {
+                        shot.animationIndex++;
 
-                if (shot.animationIndex > 0) {
-                    if (!shot.missed) {
-                        const contour = generateCircle(0.06, 0.06, 6, 'xy');
-                        let path = [...shot.curve.getPoints()].splice(0, shot.animationIndex);
-                        if (path.length > 1) {
-                            if (path.length > 13) {
-                                path = path.splice(-13);
+                        if (shot.animationIndex > 0) {
+
+                            const contour = generateCircle(0.06, 0.06, 6, 'xy');
+                            let path = [...shot.curve.getPoints()].splice(0, shot.animationIndex);
+                            if (path.length > 1) {
+                                if (path.length > 13) {
+                                    path = path.splice(-13);
+                                }
+
+                                if (shot.tracer) {
+                                    scene.removeMesh(shot.tracer, true);
+                                }
+
+                                shot.tracer = BABYLON.MeshBuilder.ExtrudeShape('ext0', {
+                                    shape: contour,
+                                    path: path
+                                });
+
+                                shot.tracer.material = new BABYLON.StandardMaterial("trackMat", scene);
+                                shot.tracer.material.diffuseColor = BABYLON.Color3.FromHexString(mainColor);
+                                shot.tracer.material.emissiveColor = BABYLON.Color3.FromHexString(mainColor);
+
+                                shot.tracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
                             }
-
-                            if (shot.tracer) {
-                                scene.removeMesh(shot.tracer, true);
-                            }
-
-                            shot.tracer = BABYLON.MeshBuilder.ExtrudeShape('ext0', {
-                                shape: contour,
-                                path: path
-                            });
-
-                            shot.tracer.material = new BABYLON.StandardMaterial("trackMat", scene);
-                            shot.tracer.material.diffuseColor = BABYLON.Color3.FromHexString(mainColor);
-                            shot.tracer.material.emissiveColor = BABYLON.Color3.FromHexString(mainColor);
-
-                            shot.tracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
                         }
                     }
                 }
