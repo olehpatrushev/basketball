@@ -292,14 +292,16 @@
                             scene.removeMesh(shot.tracer, true);
                             shot.tracer = null;
                         }
-                        if (Math.random() > 0.9) {
-                            shot.animationIndex = 0;
-                            console.log(1);
-                        }
-                    } else {
-                        shot.animationIndex++;
 
-                        if (shot.animationIndex > 0) {
+                        shot.animationIndex = 0;
+
+                    } else {
+                        if (shot.animationIndex == 0) {
+                            if (Math.random() > 0.95) {
+                                shot.animationIndex++;
+                            }
+                        } else {
+                            shot.animationIndex++;
 
                             const contour = generateCircle(0.06, 0.06, 6, 'xy');
                             let path = [...shot.curve.getPoints()].splice(0, shot.animationIndex);
