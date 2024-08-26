@@ -2068,7 +2068,7 @@
 			"alphaCutoff":0.5,
 			"alphaMode":"MASK",
 			"doubleSided":true,
-			"name":"sponsor.003",
+			"name":"sponsor",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":22
@@ -2081,7 +2081,7 @@
 			"alphaCutoff":0.5,
 			"alphaMode":"MASK",
 			"doubleSided":true,
-			"name":"logo.003",
+			"name":"logo",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":23
