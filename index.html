@@ -284,9 +284,7 @@
             }
 
             runtime.shots.every((shot) => {
-                const newPosition = shot.curve.getPoints()[shot.animationIndex];
-
-                if (!shot.missed) {
+                if (!shot.missed) {                    
                     if (shot.animationIndex >= shot.curve.getPoints().length) {
                         if (shot.tracer) {
                             scene.removeMesh(shot.tracer, true);
