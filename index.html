@@ -232,6 +232,18 @@
                     logoMaterial.albedoTexture.updateURL("./tex/Creighton_Logo_Alpha.png");
 
                     loadData("b0edea70-22e1-11eb-b93a-02420c129761", "shots");
+                    
+                    setUpMainScreen({
+                        firstName: "Anton",
+                        lastName: "Golikov",
+                        number: "44",
+                        stat1: "50",
+                        stat2: "50%",
+                        stat3: "50%",
+                        backgroundImgUrl: "./tex/main_screen_background.jpg",
+                        teamLogoBackgroundImgUrl: "./tex/main_screen_teamlogo_background.png",
+                        playerImgUrl: "./tex/main_screen_playerimage.png"
+                    })
 
                     startLoop();
                 });
@@ -355,6 +367,7 @@
             let x = parseInt(shotData.hsx);
             let y = parseInt(shotData.hsy);
 
+            /*
             if (isNaN(x) || x <= -7620 || x >= 7620) {
                 console.warn(`"x" must be integer between -7620 and 7620, ${x} given`);
                 return;
@@ -363,9 +376,10 @@
                 console.warn(`"y" must be integer between -1220 and 14210, ${y} given`);
                 return;
             }
+            */
 
             x = x / 1080;
-            y = (y + 1220) / 1150;
+            y = (y + 1600) / 1080;
 
             y = 13.374 - y;
 
@@ -494,12 +508,12 @@
         }
 
         const setUpMainScreen = async function(data = {
-            text1: "Text1",
-            text2: "Text2",
-            text3: "Text3",
-            text4: "Text4",
-            text5: "Text5",
-            text6: "Text6",
+            firstName: "Text1",
+            lastName: "Text2",
+            number: "Text3",
+            stat1: "Text4",
+            stat2: "Text5",
+            stat3: "Text6",
             backgroundImgUrl: null,
             teamLogoBackgroundImgUrl: null,
             playerImgUrl: null
@@ -516,7 +530,7 @@
             // Draw Background
             const backgroundImg = new Image();
             backgroundImg.crossOrigin = "anonymous";
-            backgroundImg.src = data.backgroundImgUrl || './tex/main_screen_background.png';
+            backgroundImg.src = data.backgroundImgUrl || './tex/main_screen_background.jpg';
             await backgroundImg.decode();
             ctx.drawImage(backgroundImg, 0, 0, 3840, 1080);
             // Draw Player Background
@@ -530,7 +544,6 @@
 
             await font1.load();
             document.fonts.add(font1);
-            console.log('Font loaded');
 
             // Draw First Name
             ctx.font = '257px "KenyanCoffeeRg-BoldItalic"';
@@ -540,27 +553,51 @@
             ctx.shadowOffsetX = 27;
             ctx.shadowOffsetY = 27;
             ctx.shadowBlur = 0;
-            ctx.fillText(data.text1 || "", 1180, 336);
+            ctx.fillText(data.firstName.toUpperCase() || "", 1180, 336);
 
             // Draw Last Name
             ctx.font = '309px "KenyanCoffeeRg-BoldItalic"';
-            ctx.strokeStyle = "#00f6ff";
-            ctx.lineWidth = 6;
+            ctx.strokeStyle = mainColor;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
-            ctx.shadowColor = "#00f6ff";
+            ctx.lineWidth = 10;
+            ctx.filter = 'blur(20px)';
+            ctx.strokeText(data.lastName || "", 1127, 600);
+            ctx.filter = 'none';
+            ctx.shadowColor = mainColor;
             ctx.shadowBlur = 30;
-            ctx.strokeText(data.text2 || "", 1127, 600);
+            ctx.lineWidth = 6;
+            ctx.strokeText(data.lastName.toUpperCase() || "", 1127, 600);
 
             // Draw Player Number
             ctx.font = '556px "KenyanCoffeeRg-BoldItalic"';
-            ctx.strokeStyle = "#00f6ff";
+            ctx.strokeStyle = mainColor;
+            ctx.lineWidth = 10;
+            ctx.filter = 'blur(20px)';
+            ctx.strokeText(data.number || "", 647, 576);
+            ctx.filter = 'none';
             ctx.lineWidth = 6;
-            ctx.strokeText(data.text3 || "", 647, 576);
+            ctx.strokeText(data.number || "", 647, 576);
+            
+            // Draw Stats Titles
+            ctx.textAlign = "right"
+            ctx.font = '288px "KenyanCoffeeRg-BoldItalic"';
+            ctx.strokeStyle = mainColor;
+            ctx.lineWidth = 10;
+            ctx.filter = 'blur(20px)';
+            ctx.strokeText("POINTS", 3000, 380);
+            ctx.strokeText("FG%", 3000, 676);
+            ctx.strokeText("3 PT FG%", 3000, 959);
+            ctx.filter = 'none';
+            ctx.lineWidth = 6;
+            ctx.strokeText("POINTS", 3000, 380);
+            ctx.strokeText("FG%", 3000, 676);
+            ctx.strokeText("3 PT FG%", 3000, 959);
+            ctx.textAlign = "left"
 
             await font2.load();
             document.fonts.add(font2);
-            console.log('Font loaded');
+            
 
             // Draw Stats
             ctx.font = '288px "KenyanCoffeeRg-Bold"';
@@ -569,16 +606,44 @@
             ctx.shadowOffsetX = 27;
             ctx.shadowOffsetY = 27;
             ctx.shadowBlur = 0;
-            ctx.fillText(data.text4 || "", 3100, 380);
-            ctx.fillText(data.text5 || "", 3100, 676);
-            ctx.fillText(data.text6 || "", 3100, 959);
+            ctx.fillText(data.stat1 || "", 3100, 380);
+            ctx.fillText(data.stat2 || "", 3100, 676);
+            ctx.fillText(data.stat3 || "", 3100, 959);
 
             // Draw Player Image
             const playerImg = new Image();
             playerImg.crossOrigin = "anonymous";
             playerImg.src = data.playerImgUrl || './tex/main_screen_playerimage.png';
             await playerImg.decode();
-            ctx.drawImage(playerImg, -7, -6, 1336, 1130);
+            const outlineSize = 10; // Outline size
+            const x = 50; // X position of the image
+            const y = 100; // Y position of the image
+            ctx.shadowOffsetX = 10;
+            ctx.shadowOffsetY = 10;
+            
+            // Creating a temporary canvas for the outline
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = playerImg.width + 2 * outlineSize;
+            tempCanvas.height = playerImg.height + 2 * outlineSize;
+            
+            // Drawing the outline on the temporary canvas
+            tempCtx.drawImage(playerImg, outlineSize, outlineSize);
+            tempCtx.globalCompositeOperation = 'source-in';
+            tempCtx.fillStyle = mainColor; // Outline color
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // Drawing the outline on the main canvas
+            for (let dx = -outlineSize; dx <= outlineSize; dx++) {
+                for (let dy = -outlineSize; dy <= outlineSize; dy++) {
+                    if (dx * dx + dy * dy <= outlineSize * outlineSize) {
+                        ctx.drawImage(tempCanvas, x + dx, y + dy);
+                    }
+                }
+            }
+            
+            // Finally, drawing the image itself on top of the outline
+            ctx.drawImage(playerImg, x + outlineSize, y + outlineSize, 1215, 1008);
 
             const screenMesh = scene.getMeshById("screen_1");
             const base64 = canvas.toDataURL();
