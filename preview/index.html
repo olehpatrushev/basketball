@@ -1,0 +1,115 @@
+<!doctype html>
+
+<html>
+
+    <head>
+        <title>Perspective.js demo</title>
+        <style>
+            canvas {
+                border: gray solid 1px;
+            }
+        </style>
+    </head>
+
+    <body style="margin: 0;padding:0;">
+        <canvas id="canvas" style="max-width: 100%; display: block;"></canvas>
+        <script src="perspective.js"></script>
+        <script>
+                   
+            let canvas = document.getElementById("canvas");
+            let ctx = canvas.getContext("2d");
+
+            let background = new Image();
+            background.onload = function() {
+                canvas.width = background.width;
+                canvas.height = background.height;
+                ctx.fillStyle = '#1328a9';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(background, 0, 0, background.width, background.height);
+            }
+            background.src = "background.png";
+
+            let mainScreen = new Image();
+            mainScreen.onload = function() {
+                let p = new Perspective(ctx, mainScreen);
+                p.draw([[632,28],[1292,28],[1276,218],[648,218]]);
+            }
+            mainScreen.src = '../tex/main_screen_background.jpg';
+
+            let leftBigScreen = new Image();
+            leftBigScreen.onload = function() {
+                let p = new Perspective(ctx, leftBigScreen);
+                p.draw([[86,293],[392,205],[425,407],[156,593]]);
+            }
+            leftBigScreen.src = "../tex/GatoradeG_screen.jpg";
+
+            let rightBigScreen = new Image();
+            rightBigScreen.onload = function() {
+                let p = new Perspective(ctx, rightBigScreen);
+                p.draw([[1532,205],[1840,293],[1770,593],[1499,407]]);
+            }
+            rightBigScreen.src = "../tex/GatoradeG_screen.jpg";
+            
+            let leftSmallScreen = new Image();
+            leftSmallScreen.onload = function() {
+                let p = new Perspective(ctx, leftSmallScreen);
+                p.draw([[468,343],[585,324],[595,416],[484,440]]);
+
+            }
+            leftSmallScreen.src = 'firefox.jpg';
+
+            let rightSmallScreen = new Image();
+            let rslCoordinates=[[1339,325],[1456,344],[1438,436],[1329,416]];
+            rightSmallScreen.onload = function() {
+                let p = new Perspective(ctx, rightSmallScreen);
+                p.draw(rslCoordinates);
+            }
+            rightSmallScreen.src = "../tex/GatoradeG_screen.jpg";
+
+
+            let sponsor_places = [
+                [[883,802],[1036,802],[1049,897],[875,897]],
+                [[883, 802], [1036, 802], [1049, 897], [875, 897]],
+                [[257, 547], [310, 511], [330, 601], [279, 645]],
+                [[432, 425], [462, 400], [473, 474], [442, 501]],
+                [[637, 362], [700, 361], [705, 423], [644, 422]],
+                [[781, 363], [842, 363], [844, 421], [783, 421]],
+                [[1063, 361], [1127, 361], [1127, 422], [1063, 422]],
+                [[1207, 361], [1268, 361], [1266, 420], [1204, 422]],
+                [[1458, 400], [1490, 422], [1475, 500], [1446, 473]],
+                [[1587, 493], [1636, 528], [1616, 622], [1570, 586]],
+                [[1819, 657], [1914, 725], [1874, 852], [1789, 773]],
+                [[945, 433], [975, 433], [975, 462], [945, 462]]
+            ];
+            
+            
+            sponsor_places.forEach(place => {
+                let logo = new Image();
+                logo.onload = function() {
+                    let p = new Perspective(ctx, logo);
+                    p.draw(place);
+                }
+                logo.src = "../tex/GatoradeG.png";
+            });
+            
+            
+            let team_places = [
+                [[120, 644], [193, 593], [218, 696], [150, 759]],
+                [[357, 476], [396, 450], [410, 527], [371, 562]],
+                [[1511, 439], [1551, 465], [1536, 554], [1497, 519]],
+                [[1684, 561], [1750, 610], [1724, 715], [1660, 666]]
+            ];
+            
+            team_places.forEach(place => {
+                let logo = new Image();
+                logo.onload = function() {
+                    let p = new Perspective(ctx, logo);
+                    p.draw(place);
+                }
+                logo.src = "../tex/Creighton_Bluejays_logo_svg.png";
+            });
+
+        </script>
+    </body>
+
+</html>

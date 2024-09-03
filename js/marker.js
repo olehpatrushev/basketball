@@ -1,4 +1,4 @@
-const getSVGData = (color) => {
+export const getGreenMarkerSVGData = (color) => {
     return `<svg width="1080" height="1080" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" version="1.1">
  <defs>
   <radialGradient gradientTransform="matrix(1,0,0,1,-242,121.20001219213009)" gradientUnits="userSpaceOnUse" r="540" cy="418.7721" cx="782.02" id="SVGID_1_">
@@ -24,28 +24,4 @@ const getSVGData = (color) => {
   </g>
  </g>
 </svg>`;
-}
-
-export const getMarkerTexture = async (color) => {
-    const img = new Image();
-    const svgBlob = new Blob([getSVGData(color)], {
-        type: 'image/svg+xml;charset=utf-8'
-    });
-    const url = URL.createObjectURL(svgBlob);
-    img.src = url;
-
-    await img.decode();
-
-    const canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    const ctx = canvas.getContext("2d");
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
-
-    URL.revokeObjectURL(url);
-
-    return canvas.toDataURL("image/png");;
 }
