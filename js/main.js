@@ -378,7 +378,7 @@ const process = function () {
             }
         });
 
-        if (!shot.missed) {
+        if (shot && !shot.missed) {
             if (shot.animationIndex >= shot.curve.getPoints().length) {
                 if (shot.tracer) {
                     scene.removeMesh(shot.tracer, true);
