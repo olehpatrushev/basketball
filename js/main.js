@@ -413,6 +413,8 @@ const process = function () {
                     shot.tracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
                 }
             }
+        } else if (!shot) {
+            runtime.currentShotIndex = 0;
         }
     }
 }
