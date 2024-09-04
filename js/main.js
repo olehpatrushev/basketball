@@ -516,7 +516,7 @@ const prepareShot = function (shotData = {}) {
                     control,
                     destination
                 ],
-        Math.max(parseInt(distance) * 3, 30),
+        Math.max(parseInt(distance), 13),
         false
     );
 
