@@ -1,4 +1,4 @@
-export const getGreenMarkerSVGData = (color) => {
+export const getMarkerSVGContent = (color) => {
     return `<svg width="1080" height="1080" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" version="1.1">
  <defs>
   <radialGradient gradientTransform="matrix(1,0,0,1,-242,121.20001219213009)" gradientUnits="userSpaceOnUse" r="540" cy="418.7721" cx="782.02" id="SVGID_1_">

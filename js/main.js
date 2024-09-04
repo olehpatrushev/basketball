@@ -1,6 +1,18 @@
 import {
-    getGreenMarkerSVGData
+    getMarkerSVGContent
 } from "./marker.js";
+
+import {
+    convertSVGContentToDataUrl,
+    convertSVGToDataUrl
+} from "./helpers/svg.js"
+
+import {
+    cacheItem,
+    getItem,
+    hasItem
+} from "./helpers/cache.js"
+
 // Get the canvas element
 const canvas = document.getElementById('renderCanvas');
 
@@ -69,6 +81,12 @@ const engine = new BABYLON.Engine(canvas, true);
 
 let camera; // Declare camera variable in global scope
 let IS_DEV = false;
+
+let runtime = {
+    shots: [],
+    loaded: false,
+    currentShotIndex: 0
+};
 
 if (urlParams.has('IS_DEV')) {
     IS_DEV = true;
@@ -203,7 +221,7 @@ const scene = (() => {
 
             //IS_DEV && showAxis(100);
 
-            IS_DEV &&!IS_CHROMAKEY && setUpSegments({
+            IS_DEV && !IS_CHROMAKEY && setUpSegments({
                 "segment_1": {
                     "missed": 10,
                     "made": 20
@@ -221,39 +239,40 @@ const scene = (() => {
             scene.getMeshByName('upper_wall').material.albedoColor = BABYLON.Color3.FromHexString(supportColor2);
             scene.getMeshByName('seats').material.albedoColor = BABYLON.Color3.FromHexString(supportColor1);
             scene.getMeshByName('blue_wall').material.albedoColor = BABYLON.Color3.FromHexString(supportColor2);
-            
-            setUpScreens({"screen_1": "./tex/main_screen_background.jpg"})
-            
+
+            setUpScreens({
+                "screen_1": "./tex/main_screen_background.jpg"
+            })
+
             let sponsorLogo = "./tex/GatoradeG.png";
             if (extractedData && extractedData.sponsorZones.sponsorZone1.id) {
-                sponsorLogo = `https://3d.stacqan.com/img.php?teamId=${extractedData.teamId}&sponsorId=${extractedData.sponsorZones.sponsorZone1.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone1.graphicPathFilename}`;    
+                sponsorLogo = `https://3d.stacqan.com/img.php?teamId=${extractedData.teamId}&sponsorId=${extractedData.sponsorZones.sponsorZone1.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone1.graphicPathFilename}`;
             }
 
             let logoURL = "./tex/Creighton_Bluejays_logo_svg.png";
             if (extractedData && extractedData.logoId) {
                 logoURL = "https://shottracker.com/pimg/" + extractedData.logoId;
             }
-            
+
             if (IS_CHROMAKEY) {
-                sponsorLogo =  './tex/blue.png';
+                sponsorLogo = './tex/blue.png';
                 logoURL = './tex/red.png';
             }
-            
+
             const sponsorMaterial = scene.getMaterialByName('sponsor');
             sponsorMaterial.albedoTexture.updateURL(sponsorLogo);
             const logoMaterial = scene.getMaterialByName('logo');
             logoMaterial.albedoTexture.updateURL(logoURL);
 
-            
+
 
             if (extractedData && !IS_CHROMAKEY) {
-                if(extractedData.type == 'shotMap'){
+                if (extractedData.type == 'shotMap') {
                     loadData(extractedData.gameId, "shots");
-                }
-                else{
+                } else {
                     loadData(extractedData.gameId, "zones")
                 }
-                
+
                 if (extractedData.player) {
                     setUpMainScreen({
                         firstName: extractedData.player.first_name,
@@ -267,24 +286,40 @@ const scene = (() => {
                         playerImgUrl: "https://shottracker.com/pimg/" + extractedData.player.image_light
                     });
                 }
-                if(extractedData.sponsorZones.sponsorZone2.id) {
+                if (extractedData.sponsorZones.sponsorZone2.id) {
                     let screen2url = `https://3d.stacqan.com/img.php?teamId=${extractedData.teamId}&sponsorId=${extractedData.sponsorZones.sponsorZone2.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone2.graphicPathFilename}`;
-                    setUpScreens({"screen_2": screen2url})
-                }                
-                if(extractedData.sponsorZones.sponsorZone3.id) {
+                    setUpScreens({
+                        "screen_2": screen2url
+                    })
+                }
+                if (extractedData.sponsorZones.sponsorZone3.id) {
                     let screen3url = `https://3d.stacqan.com/img.php?teamId=${extractedData.teamId}&sponsorId=${extractedData.sponsorZones.sponsorZone3.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone3.graphicPathFilename}`;
-                    setUpScreens({"screen_4": screen3url})
-                    setUpScreens({"screen_5": screen3url})
+                    setUpScreens({
+                        "screen_4": screen3url
+                    })
+                    setUpScreens({
+                        "screen_5": screen3url
+                    })
                 }
             }
-            
+
             if (IS_CHROMAKEY) {
                 let redpix = './tex/redpix.png';
-                setUpScreens({"screen_1": redpix})
-                setUpScreens({"screen_2": redpix});
-                setUpScreens({"screen_3": redpix});
-                setUpScreens({"screen_4": redpix});
-                setUpScreens({"screen_5": redpix});
+                setUpScreens({
+                    "screen_1": redpix
+                })
+                setUpScreens({
+                    "screen_2": redpix
+                });
+                setUpScreens({
+                    "screen_3": redpix
+                });
+                setUpScreens({
+                    "screen_4": redpix
+                });
+                setUpScreens({
+                    "screen_5": redpix
+                });
                 //loadData("b0edea70-22e1-11eb-b93a-02420c129761", "shots");
             }
 
@@ -300,11 +335,6 @@ const logCameraParameters = function (camera) {
     console.log("Camera Beta:", camera.beta);
     console.log("Camera Radius:", camera.radius);
     console.log("Camera Target:", camera.target);
-};
-
-let runtime = {
-    shots: [],
-    loaded: false
 };
 
 // Register a render loop to repeatedly render the scene
@@ -336,7 +366,18 @@ const process = function () {
         return;
     }
 
-    runtime.shots.every((shot) => {
+    if (runtime.shots.length > 0) {
+        if (runtime.currentShotIndex + 1 >= runtime.shots.length) {
+            runtime.currentShotIndex = 0;
+        }
+
+        const shot = runtime.shots.find((element, index) => {
+            if (!element.missed && index >= runtime.currentShotIndex) {
+                runtime.currentShotIndex = index;
+                return true;
+            }
+        });
+
         if (!shot.missed) {
             if (shot.animationIndex >= shot.curve.getPoints().length) {
                 if (shot.tracer) {
@@ -345,43 +386,35 @@ const process = function () {
                 }
 
                 shot.animationIndex = 0;
-
+                runtime.currentShotIndex++;
             } else {
-                if (shot.animationIndex == 0) {
-                    if (Math.random() > 0.95) {
-                        shot.animationIndex++;
+                shot.animationIndex++;
+
+                const contour = generateCircle(0.06, 0.06, 6, 'xy');
+                let path = [...shot.curve.getPoints()].splice(0, shot.animationIndex);
+                if (path.length > 1) {
+                    if (path.length > 13) {
+                        path = path.splice(-13);
                     }
-                } else {
-                    shot.animationIndex++;
 
-                    const contour = generateCircle(0.06, 0.06, 6, 'xy');
-                    let path = [...shot.curve.getPoints()].splice(0, shot.animationIndex);
-                    if (path.length > 1) {
-                        if (path.length > 13) {
-                            path = path.splice(-13);
-                        }
-
-                        if (shot.tracer) {
-                            scene.removeMesh(shot.tracer, true);
-                        }
-
-                        shot.tracer = BABYLON.MeshBuilder.ExtrudeShape('ext0', {
-                            shape: contour,
-                            path: path
-                        });
-
-                        shot.tracer.material = new BABYLON.StandardMaterial("trackMat", scene);
-                        shot.tracer.material.diffuseColor = BABYLON.Color3.FromHexString(mainColor);
-                        shot.tracer.material.emissiveColor = BABYLON.Color3.FromHexString(mainColor);
-
-                        shot.tracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
+                    if (shot.tracer) {
+                        scene.removeMesh(shot.tracer, true);
                     }
+
+                    shot.tracer = BABYLON.MeshBuilder.ExtrudeShape('ext0', {
+                        shape: contour,
+                        path: path
+                    });
+
+                    shot.tracer.material = new BABYLON.StandardMaterial("trackMat", scene);
+                    shot.tracer.material.diffuseColor = BABYLON.Color3.FromHexString(mainColor);
+                    shot.tracer.material.emissiveColor = BABYLON.Color3.FromHexString(mainColor);
+
+                    shot.tracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
                 }
             }
         }
-
-        return true;
-    });
+    }
 }
 
 const prepareShot = function (shotData = {}) {
@@ -424,24 +457,35 @@ const prepareShot = function (shotData = {}) {
 
     shot.missed = shotData.st == "MISS";
 
-    let markerMaterial = new BABYLON.StandardMaterial("shotMat");
-
-    let color;
+    let markerMaterial;
 
     if (shot.missed) {
-        svgToPng('./tex/red_marker.svg', '', '', '', true).then((dataUrl) => {
-            markerMaterial.diffuseTexture = markerMaterial.emissiveTexture = markerMaterial.opacityTexture = new BABYLON.Texture(dataUrl);
-        })
+        if (hasItem("markerMaterialMissed")) {
+            markerMaterial = getItem("markerMaterialMissed");
+        }
     } else {
-        color = mainColor;
-        svgToPng('', getGreenMarkerSVGData(color), '', '', true).then((dataUrl) => {
+        if (hasItem("markerMaterialDone")) {
+            markerMaterial = getItem("markerMaterialDone");
+        }
+    }
+
+    if (!markerMaterial) {
+        markerMaterial = new BABYLON.StandardMaterial("shotMat")
+
+        let color;
+
+        if (shot.missed) {
+            cacheItem("markerMaterialMissed", markerMaterial);
+            color = "#ff0000";
+        } else {
+            cacheItem("markerMaterialDone", markerMaterial);
+            color = mainColor;
+        }
+
+        convertSVGContentToDataUrl(getMarkerSVGContent(color)).then(dataUrl => {
             markerMaterial.diffuseTexture = markerMaterial.emissiveTexture = markerMaterial.opacityTexture = new BABYLON.Texture(dataUrl);
         })
     }
-
-    //getGreenMarkerTexture(color).then((dataUrl) => {
-    //    markerMaterial.diffuseTexture = markerMaterial.emissiveTexture = markerMaterial.opacityTexture = new BABYLON.Texture(dataUrl);
-    //})
 
     const markersRoot = scene.getNodeById("markersRoot");
     const marker = BABYLON.MeshBuilder.CreatePlane("marker", {
@@ -497,6 +541,7 @@ const clearShots = function () {
     });
 
     runtime.shots = [];
+    runtime.currentShotIndex = 0;
 }
 
 const setUpSegments = function (data = {}) {
@@ -563,7 +608,6 @@ const setUpMainScreen = async function (data = {
     backgroundImgUrl: null,
     teamLogoBackgroundImgUrl: null,
     playerImgUrl: null
-
 }) {
     const font1 = new FontFace("KenyanCoffeeRg-BoldItalic", "url('./fonts/kenyan_coffee_bd_it-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd_it-webfont.woff') format('woff')");
     const font2 = new FontFace("KenyanCoffeeRg-Bold", "url('./fonts/kenyan_coffee_bd-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd-webfont.woff') format('woff')");
@@ -732,6 +776,8 @@ const loadData = function (gameEventId, type) {
         });
 }
 
+window.loadData = loadData
+
 const generateCircle = function (r1 = 0.5, r2 = 0.5, q = 12, plane = 'xy') {
     var p = [];
     let a = 2 * Math.PI / q; // arc of each section
@@ -777,110 +823,72 @@ const vround = function (v, d) {
     return v.fromArray(va);
 }
 
-const svgToPng = function (svgUrl = '', svgText = '', width = 300, height = 300, preserveOriginalSize = false) {
-  return new Promise((resolve, reject) => {
-    if (!svgText) {
-      fetch(svgUrl)
-        .then(response => response.text())
-        .then(svgContent => processSvgToPng(svgContent))
-        .catch(error => reject('Ошибка загрузки SVG: ' + error));
-    } else {
-      processSvgToPng(svgText);
-    }
-
-    function processSvgToPng(svgContent) {
-      const img = new Image();
-      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgContent);
-
-      img.onload = function () {
-        if (preserveOriginalSize) {
-          width = img.width;
-          height = img.height;
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const context = canvas.getContext('2d');
-        context.drawImage(img, 0, 0, width, height);
-
-        const pngDataUrl = canvas.toDataURL('image/png');
-        resolve(pngDataUrl);
-      };
-
-      img.onerror = function (e) {
-        reject('Ошибка загрузки изображения: ' + e);
-      };
-    }
-  });
-}
-
 function extractDataFromLocalStorage() {
-  // Получаем данные из localStorage по ключу 'air'
-  const airData = JSON.parse(localStorage.getItem('air'));
+    // Получаем данные из localStorage по ключу 'air'
+    const airData = JSON.parse(localStorage.getItem('air'));
 
-  if (!airData) {
-    console.error('No data found in localStorage with key "air"');
-    return null;
-  }
-
-  // Инициализируем объект для сохранения извлеченных данных
-  const extractedData = {
-    type: airData.playlist.type,
-    sponsorZones: {
-      sponsorZone1: {
-        id: airData.playlist.sponsorZone1.id,
-        sponsorId: airData.playlist.sponsorZone1.sponsorId,
-        graphicPathFilename: airData.playlist.sponsorZone1.graphicPathFilename
-      },
-      sponsorZone2: {
-        id: airData.playlist.sponsorZone2.id,
-        sponsorId: airData.playlist.sponsorZone2.sponsorId,
-        graphicPathFilename: airData.playlist.sponsorZone2.graphicPathFilename
-      },
-      sponsorZone3: {
-        id: airData.playlist.sponsorZone3.id,
-        sponsorId: airData.playlist.sponsorZone3.sponsorId,
-        graphicPathFilename: airData.playlist.sponsorZone3.graphicPathFilename
-      }
-    },
-    player: null,
-    gameId: airData.gameId,
-    teamId: airData.teamId,
-    color: null,
-    logoId: null
-  };
-
-  // Поиск первого игрока из homeTeamPlayers или awayTeamPlayers
-  const firstHomePlayer = airData.playlist.homeTeamPlayers.length > 0 ? airData.playlist.homeTeamPlayers[0] : null;
-  const firstAwayPlayer = airData.playlist.awayTeamPlayers.length > 0 ? airData.playlist.awayTeamPlayers[0] : null;
-
-  const selectedPlayer = firstHomePlayer || firstAwayPlayer;
-
-  // Если найден игрок, заполняем информацию
-  if (selectedPlayer) {
-    extractedData.player = {
-      id: selectedPlayer.id,
-      first_name: selectedPlayer.first_name,
-      last_name: selectedPlayer.last_name,
-      jersey_number_str: selectedPlayer.jersey_number_str,
-      image_light: selectedPlayer.team_player_images.image_light
-    };
-    
-    // Определяем teamId и color в зависимости от команды игрока
-    if (firstHomePlayer && airData.homeTeamColor) {
-      extractedData.color = `#${airData.homeTeamColor.color}`; // цвет домашней команды с символом #
-      if(extractedData.homeTeamImage){
-        extractedData.logoId = extractedData.homeTeamImage;  
-      }
-      
-    } else if (firstAwayPlayer && airData.awayTeamColor) {
-      extractedData.color = `#${airData.awayTeamColor.color}`; // цвет выездной команды с символом #
-      if(extractedData.awayTeamImage){
-        extractedData.logoId = extractedData.awayTeamImage;  
-      }
+    if (!airData) {
+        console.error('No data found in localStorage with key "air"');
+        return null;
     }
-  }
 
-  return extractedData;
+    // Инициализируем объект для сохранения извлеченных данных
+    const extractedData = {
+        type: airData.playlist.type,
+        sponsorZones: {
+            sponsorZone1: {
+                id: airData.playlist.sponsorZone1.id,
+                sponsorId: airData.playlist.sponsorZone1.sponsorId,
+                graphicPathFilename: airData.playlist.sponsorZone1.graphicPathFilename
+            },
+            sponsorZone2: {
+                id: airData.playlist.sponsorZone2.id,
+                sponsorId: airData.playlist.sponsorZone2.sponsorId,
+                graphicPathFilename: airData.playlist.sponsorZone2.graphicPathFilename
+            },
+            sponsorZone3: {
+                id: airData.playlist.sponsorZone3.id,
+                sponsorId: airData.playlist.sponsorZone3.sponsorId,
+                graphicPathFilename: airData.playlist.sponsorZone3.graphicPathFilename
+            }
+        },
+        player: null,
+        gameId: airData.gameId,
+        teamId: airData.teamId,
+        color: null,
+        logoId: null
+    };
+
+    // Поиск первого игрока из homeTeamPlayers или awayTeamPlayers
+    const firstHomePlayer = airData.playlist.homeTeamPlayers.length > 0 ? airData.playlist.homeTeamPlayers[0] : null;
+    const firstAwayPlayer = airData.playlist.awayTeamPlayers.length > 0 ? airData.playlist.awayTeamPlayers[0] : null;
+
+    const selectedPlayer = firstHomePlayer || firstAwayPlayer;
+
+    // Если найден игрок, заполняем информацию
+    if (selectedPlayer) {
+        extractedData.player = {
+            id: selectedPlayer.id,
+            first_name: selectedPlayer.first_name,
+            last_name: selectedPlayer.last_name,
+            jersey_number_str: selectedPlayer.jersey_number_str,
+            image_light: selectedPlayer.team_player_images.image_light
+        };
+
+        // Определяем teamId и color в зависимости от команды игрока
+        if (firstHomePlayer && airData.homeTeamColor) {
+            extractedData.color = `#${airData.homeTeamColor.color}`; // цвет домашней команды с символом #
+            if (extractedData.homeTeamImage) {
+                extractedData.logoId = extractedData.homeTeamImage;
+            }
+
+        } else if (firstAwayPlayer && airData.awayTeamColor) {
+            extractedData.color = `#${airData.awayTeamColor.color}`; // цвет выездной команды с символом #
+            if (extractedData.awayTeamImage) {
+                extractedData.logoId = extractedData.awayTeamImage;
+            }
+        }
+    }
+
+    return extractedData;
 }
