@@ -13,6 +13,8 @@ import {
     hasItem
 } from "./helpers/cache.js"
 
+const baseURL = '//shotv1.stacqan.com';
+
 // Get the canvas element
 const canvas = document.getElementById('renderCanvas');
 
@@ -58,8 +60,21 @@ const pSBC = (p, c0, c1, l) => {
 }
 
 // Получаем данные из LocalStorage
-const extractedData = extractDataFromLocalStorage();
+
 const urlParams = new URLSearchParams(window.location.search);
+
+const sceneBase64 = urlParams.get('scene');
+if (sceneBase64) {
+  try {
+    const decodedString = atob(sceneBase64);
+    window.localStorage.setItem('air', decodedString);
+    console.log('Данные успешно загружены из url');
+  } catch (error) {
+    console.error('Ошибка при декодировании или парсинге:', error);
+  }
+}
+
+const extractedData = extractDataFromLocalStorage();
 
 let IS_CHROMAKEY = false;
 if (urlParams.has('IS_CHROMAKEY')) {
@@ -73,8 +88,9 @@ if (IS_CHROMAKEY) {
     mainColor = '#00FF00';
 }
 
-const supportColor1 = pSBC(-0.4, mainColor, false, true);
+const supportColor1 = pSBC(-0.5, mainColor, false, true);
 const supportColor2 = pSBC(-0.7, mainColor, false, true);
+const supportColor3 = pSBC(-0.8, mainColor, false, true);
 
 // Generate the Babylon.js engine
 const engine = new BABYLON.Engine(canvas, true);
@@ -146,6 +162,8 @@ const scene = (() => {
     // Create a basic light, aiming 0, 1, 0 - meaning, to the sky
     const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.7;
+    //const light2 = new BABYLON.SpotLight( "spotlight_1", new BABYLON.Vector3(0, 30, 0),  new BABYLON.Vector3(0, -1, 0.3), Math.PI, 1, scene );
+    //light2.intensity = 2000;
 
     const markersRoot = new BABYLON.TransformNode("markersRoot", scene);
 
@@ -236,7 +254,7 @@ const scene = (() => {
                 }
             })
 
-            scene.getMeshByName('upper_wall').material.albedoColor = BABYLON.Color3.FromHexString(supportColor2);
+            scene.getMeshByName('upper_wall').material.albedoColor = BABYLON.Color3.FromHexString(supportColor3);
             scene.getMeshByName('seats').material.albedoColor = BABYLON.Color3.FromHexString(supportColor1);
             scene.getMeshByName('blue_wall').material.albedoColor = BABYLON.Color3.FromHexString(supportColor2);
 
@@ -245,8 +263,8 @@ const scene = (() => {
             })
 
             let sponsorLogo = "./tex/GatoradeG.png";
-            if (extractedData && extractedData.sponsorZones.sponsorZone1.id) {
-                sponsorLogo = `https://3d.stacqan.com/img.php?teamId=${extractedData.teamId}&sponsorId=${extractedData.sponsorZones.sponsorZone1.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone1.graphicPathFilename}`;
+            if (extractedData && extractedData.sponsorZones && extractedData.sponsorZones.sponsorZone1 && extractedData.sponsorZones.sponsorZone1.id) {
+                sponsorLogo = `${baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.sponsorZones.sponsorZone1.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone1.graphicPathFilename}`;
             }
 
             let logoURL = "./tex/Creighton_Bluejays_logo_svg.png";
@@ -267,12 +285,12 @@ const scene = (() => {
 
 
             if (extractedData && !IS_CHROMAKEY) {
-                if (extractedData.type == 'shotMap') {
-                    loadData(extractedData.gameId, "shots");
-                } else {
-                    loadData(extractedData.gameId, "zones")
+                if (extractedData.type == 'shotMap' && !extractedData.player) {
+                    loadData(extractedData.gameId, "shots", false, extractedData.teamId);
+                } 
+                else if(extractedData.type != 'shotMap' && !extractedData.player) {
+                    loadData(extractedData.gameId, "zones", false, extractedData.teamId)
                 }
-
                 if (extractedData.player) {
                     setUpMainScreen({
                         firstName: extractedData.player.first_name,
@@ -285,20 +303,28 @@ const scene = (() => {
                         teamLogoBackgroundImgUrl: logoURL,
                         playerImgUrl: "https://shottracker.com/pimg/" + extractedData.player.image_light
                     });
+                    if (extractedData.type == 'shotMap') {
+                        loadData(extractedData.gameId, "shots", extractedData.player.id);
+                    } else {
+                        loadData(extractedData.gameId, "zones", extractedData.player.id)
+                    }
                 }
-                if (extractedData.sponsorZones.sponsorZone2.id) {
-                    let screen2url = `https://3d.stacqan.com/img.php?teamId=${extractedData.teamId}&sponsorId=${extractedData.sponsorZones.sponsorZone2.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone2.graphicPathFilename}`;
+                if (extractedData.sponsorZones && extractedData.sponsorZones.sponsorZone2 && extractedData.sponsorZones.sponsorZone2.id) {
+                    let smallScreenURL = `${baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.sponsorZones.sponsorZone2.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone2.graphicPathFilename}`;
                     setUpScreens({
-                        "screen_2": screen2url
+                        "screen_2": smallScreenURL
+                    })
+                    setUpScreens({
+                        "screen_3": smallScreenURL
                     })
                 }
-                if (extractedData.sponsorZones.sponsorZone3.id) {
-                    let screen3url = `https://3d.stacqan.com/img.php?teamId=${extractedData.teamId}&sponsorId=${extractedData.sponsorZones.sponsorZone3.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone3.graphicPathFilename}`;
+                if (extractedData.sponsorZones && extractedData.sponsorZones.sponsorZone3 && extractedData.sponsorZones.sponsorZone3.id) {
+                    let bigScreenURL = `${baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.sponsorZones.sponsorZone3.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone3.graphicPathFilename}`;
                     setUpScreens({
-                        "screen_4": screen3url
+                        "screen_4": bigScreenURL
                     })
                     setUpScreens({
-                        "screen_5": screen3url
+                        "screen_5": bigScreenURL
                     })
                 }
             }
@@ -328,6 +354,16 @@ const scene = (() => {
 
     return scene;
 })();
+
+window.addEventListener("keydown", function (event) {
+    if (event.key === 'e') {
+        let base64String = btoa(localStorage.getItem('air'));
+        let urlWithoutParams = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}${window.location.pathname}`;
+        let urlFull = urlWithoutParams + '?scene=' + base64String;
+        navigator.clipboard.writeText(urlFull);
+        console.log(urlFull);
+    }
+});
 
 const logCameraParameters = function (camera) {
     console.log("Camera Position:", camera.position);
@@ -659,7 +695,7 @@ const setUpMainScreen = async function (data = {
     ctx.shadowColor = mainColor;
     ctx.shadowBlur = 30;
     ctx.lineWidth = 6;
-    ctx.strokeText(data.lastName.toUpperCase() || "", 1127, 600);
+    ctx.fillText(data.lastName.toUpperCase() || "", 1127, 600);
 
     // Draw Player Number
     ctx.font = '556px "KenyanCoffeeRg-BoldItalic"';
@@ -742,24 +778,33 @@ const setUpMainScreen = async function (data = {
     screenMesh.material.emissiveTexture.updateURL(base64);
 }
 
-const loadData = function (gameEventId, type) {
+const loadData = function (gameEventId, type, playerId = false, teamId = false) {
     if (!runtime.loaded) {
         console.warn("Scene has not been loaded yet");
         return;
     }
 
-    const url = `//shotv1.4natic.online/v1/data/stats/games/${gameEventId}/shots`;
+    const url = `${baseURL}/v1/data/stats/games/${gameEventId}/shots`;
     const data = fetch(url)
         .then((response) => response.json())
         .then((responseData) => {
+            
+            let filtredShots;
+            if (playerId) {
+                filtredShots = responseData.shots.filter(obj => obj.pid === String(playerId));
+            }
+            else {
+                filtredShots = responseData.shots.filter(obj => obj.tid === String(teamId));
+            }
+            
             if (type == 'shots') {
                 setUpSegments();
                 clearShots();
-                runtime.shots = responseData.shots.map((shot) => prepareShot(shot))
+                runtime.shots = filtredShots.map((shot) => prepareShot(shot));
             } else if (type == 'zones') {
                 let data = {};
 
-                responseData.shots.every((shot) => {
+                filtredShots.every((shot) => {
                     if (!("segment_" + shot.z in data)) {
                         data["segment_" + shot.z] = {
                             missed: 0,
@@ -838,21 +883,9 @@ function extractDataFromLocalStorage() {
     const extractedData = {
         type: airData.playlist.type,
         sponsorZones: {
-            sponsorZone1: {
-                id: airData.playlist.sponsorZone1.id,
-                sponsorId: airData.playlist.sponsorZone1.sponsorId,
-                graphicPathFilename: airData.playlist.sponsorZone1.graphicPathFilename
-            },
-            sponsorZone2: {
-                id: airData.playlist.sponsorZone2.id,
-                sponsorId: airData.playlist.sponsorZone2.sponsorId,
-                graphicPathFilename: airData.playlist.sponsorZone2.graphicPathFilename
-            },
-            sponsorZone3: {
-                id: airData.playlist.sponsorZone3.id,
-                sponsorId: airData.playlist.sponsorZone3.sponsorId,
-                graphicPathFilename: airData.playlist.sponsorZone3.graphicPathFilename
-            }
+            sponsorZone1: null,
+            sponsorZone2: null,
+            sponsorZone3: null
         },
         player: null,
         gameId: airData.gameId,
@@ -860,7 +893,28 @@ function extractDataFromLocalStorage() {
         color: null,
         logoId: null
     };
-
+    
+    if(airData.playlist.sponsorZone1 && airData.playlist.sponsorZone1.id){
+        extractedData.sponsorZones.sponsorZone1 = {
+                id: airData.playlist.sponsorZone1.id,
+                sponsorId: airData.playlist.sponsorZone1.sponsorId,
+                graphicPathFilename: airData.playlist.sponsorZone1.graphicPathFilename
+        }
+    }
+    if(airData.playlist.sponsorZone2 && airData.playlist.sponsorZone2.id){
+        extractedData.sponsorZones.sponsorZone2 = {
+                id: airData.playlist.sponsorZone2.id,
+                sponsorId: airData.playlist.sponsorZone2.sponsorId,
+                graphicPathFilename: airData.playlist.sponsorZone2.graphicPathFilename
+        }
+    }
+    if(airData.playlist.sponsorZone3 && airData.playlist.sponsorZone3.id){
+        extractedData.sponsorZones.sponsorZone3 = {
+                id: airData.playlist.sponsorZone3.id,
+                sponsorId: airData.playlist.sponsorZone3.sponsorId,
+                graphicPathFilename: airData.playlist.sponsorZone3.graphicPathFilename
+        }
+    }
     // Поиск первого игрока из homeTeamPlayers или awayTeamPlayers
     const firstHomePlayer = airData.playlist.homeTeamPlayers.length > 0 ? airData.playlist.homeTeamPlayers[0] : null;
     const firstAwayPlayer = airData.playlist.awayTeamPlayers.length > 0 ? airData.playlist.awayTeamPlayers[0] : null;
@@ -880,14 +934,14 @@ function extractDataFromLocalStorage() {
         // Определяем teamId и color в зависимости от команды игрока
         if (firstHomePlayer && airData.homeTeamColor) {
             extractedData.color = `#${airData.homeTeamColor.color}`; // цвет домашней команды с символом #
-            if (extractedData.homeTeamImage) {
-                extractedData.logoId = extractedData.homeTeamImage;
+            if (airData.homeTeamImage) {
+                extractedData.logoId = airData.homeTeamImage;
             }
 
         } else if (firstAwayPlayer && airData.awayTeamColor) {
             extractedData.color = `#${airData.awayTeamColor.color}`; // цвет выездной команды с символом #
-            if (extractedData.awayTeamImage) {
-                extractedData.logoId = extractedData.awayTeamImage;
+            if (airData.awayTeamImage) {
+                extractedData.logoId = airData.awayTeamImage;
             }
         }
     }
