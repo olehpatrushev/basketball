@@ -13,49 +13,23 @@ import {
     hasItem
 } from "./helpers/cache.js"
 
+import {
+    extractDataFromLocalStorage
+} from "./local_storage.js"
+
+import {
+    newV,
+    generateCircle,
+    makeTextPlane,
+    showAxis
+} from "./helpers/geometry.js"
+
+import {
+    pSBC
+} from "./helpers/color.js"
+
 // Get the canvas element
 const canvas = document.getElementById('renderCanvas');
-
-let pSBCr;
-const pSBC = (p, c0, c1, l) => {
-    let r, g, b, P, f, t, h, i = parseInt,
-        m = Math.round,
-        a = typeof (c1) == "string";
-    if (typeof (p) != "number" || p < -1 || p > 1 || typeof (c0) != "string" || (c0[0] != 'r' && c0[0] != '#') || (c1 && !a)) return null;
-    if (!pSBCr) pSBCr = (d) => {
-        let n = d.length,
-            x = {};
-        if (n > 9) {
-                    [r, g, b, a] = d = d.split(","), n = d.length;
-            if (n < 3 || n > 4) return null;
-            x.r = i(r[3] == "a" ? r.slice(5) : r.slice(4)), x.g = i(g), x.b = i(b), x.a = a ? parseFloat(a) : -1
-        } else {
-            if (n == 8 || n == 6 || n < 4) return null;
-            if (n < 6) d = "#" + d[1] + d[1] + d[2] + d[2] + d[3] + d[3] + (n > 4 ? d[4] + d[4] : "");
-            d = i(d.slice(1), 16);
-            if (n == 9 || n == 5) x.r = d >> 24 & 255, x.g = d >> 16 & 255, x.b = d >> 8 & 255, x.a = m((d & 255) / 0.255) / 1000;
-            else x.r = d >> 16, x.g = d >> 8 & 255, x.b = d & 255, x.a = -1
-        }
-        return x
-    };
-    h = c0.length > 9, h = a ? c1.length > 9 ? true : c1 == "c" ? !h : false : h, f = pSBCr(c0), P = p < 0, t = c1 && c1 != "c" ? pSBCr(c1) : P ? {
-        r: 0,
-        g: 0,
-        b: 0,
-        a: -1
-    } : {
-        r: 255,
-        g: 255,
-        b: 255,
-        a: -1
-    }, p = P ? p * -1 : p, P = 1 - p;
-    if (!f || !t) return null;
-    if (l) r = m(P * f.r + p * t.r), g = m(P * f.g + p * t.g), b = m(P * f.b + p * t.b);
-    else r = m((P * f.r ** 2 + p * t.r ** 2) ** 0.5), g = m((P * f.g ** 2 + p * t.g ** 2) ** 0.5), b = m((P * f.b ** 2 + p * t.b ** 2) ** 0.5);
-    a = f.a, t = t.a, f = a >= 0 || t >= 0, a = f ? a < 0 ? t : t < 0 ? a : a * P + t * p : 0;
-    if (h) return "rgb" + (f ? "a(" : "(") + r + "," + g + "," + b + (f ? "," + m(a * 1000) / 1000 : "") + ")";
-    else return "#" + (4294967296 + r * 16777216 + g * 65536 + b * 256 + (f ? m(a * 255) : 0)).toString(16).slice(1, f ? undefined : -2)
-}
 
 // Получаем данные из LocalStorage
 const extractedData = extractDataFromLocalStorage();
@@ -67,10 +41,12 @@ if (urlParams.has('IS_CHROMAKEY')) {
 }
 
 // Устанавливаем основной цвет из данных, полученных из LocalStorage
-let mainColor = extractedData && extractedData.color ? extractedData.color : '#00f6ff';
+let mainColor;
 
 if (IS_CHROMAKEY) {
     mainColor = '#00FF00';
+} else {
+    mainColor = extractedData && extractedData.color ? extractedData.color : '#00f6ff'
 }
 
 const supportColor1 = pSBC(-0.4, mainColor, false, true);
@@ -91,43 +67,6 @@ let runtime = {
 if (urlParams.has('IS_DEV')) {
     IS_DEV = true;
 }
-
-const makeTextPlane = function (text, color) {
-    const dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {
-        width: text.length * 20,
-        height: 30
-    }, scene, true);
-    dynamicTexture.hasAlpha = true;
-    dynamicTexture.drawText(text, 0, 30, "bold 36px monospace", color, "transparent", true, true);
-    const plane = BABYLON.MeshBuilder.CreatePlane("TextPlane", {
-        width: text.length * 0.25,
-        height: 0.5
-    }, scene);
-    plane.material = new BABYLON.StandardMaterial("TextPlaneMaterial", scene);
-    plane.material.backFaceCulling = false;
-    plane.material.specularColor = new BABYLON.Color3(0, 0, 0);
-    plane.material.emissiveColor = new BABYLON.Color3(1, 1, 1);;
-    plane.material.diffuseTexture = dynamicTexture;
-    return plane;
-};
-
-const showAxis = function (size) {
-    const axisX = BABYLON.Mesh.CreateLines("axisX", [
-                BABYLON.Vector3.Zero(), new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, 0.05 * size, 0),
-                new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, -0.05 * size, 0)
-            ], scene);
-    axisX.color = new BABYLON.Color3(1, 0, 0);
-    const axisY = BABYLON.Mesh.CreateLines("axisY", [
-                BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(-0.05 * size, size * 0.95, 0),
-                new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(0.05 * size, size * 0.95, 0)
-            ], scene);
-    axisY.color = new BABYLON.Color3(0, 1, 0);
-    const axisZ = BABYLON.Mesh.CreateLines("axisZ", [
-                BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, -0.05 * size, size * 0.95),
-                new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, 0.05 * size, size * 0.95)
-            ], scene);
-    axisZ.color = new BABYLON.Color3(0, 0, 1);
-};
 
 // Create the scene
 const scene = (() => {
@@ -219,7 +158,7 @@ const scene = (() => {
                 scene.getMeshByName('segment_' + i).setEnabled(false);
             }
 
-            //IS_DEV && showAxis(100);
+            //IS_DEV && showAxis(100, scene);
 
             IS_DEV && !IS_CHROMAKEY && setUpSegments({
                 "segment_1": {
@@ -573,7 +512,7 @@ const setUpSegments = function (data = {}) {
             } else {
                 segmentMesh.material.albedoColor.set(0, 0, 1);
             }
-            const scoreText = makeTextPlane(`${segmentData.made - segmentData.missed}/${segmentData.made}`, "white", 1);
+            const scoreText = makeTextPlane(`${segmentData.made - segmentData.missed}/${segmentData.made}`, "white", scene);
             scoreText.setParent(segmentsRoot);
             scoreText.position.copyFrom(segmentMesh.position);
             scoreText.position.y = 1.3;
@@ -779,118 +718,3 @@ const loadData = function (gameEventId, type) {
 }
 
 window.loadData = loadData
-
-const generateCircle = function (r1 = 0.5, r2 = 0.5, q = 12, plane = 'xy') {
-    var p = [];
-    let a = 2 * Math.PI / q; // arc of each section
-    let b = 3 * a / 2; //offset
-    for (let i = 0; i < q; i++) {
-        let v;
-        if (plane == 'xy') {
-            v = newV(r1 * Math.cos(i * a), r2 * Math.sin(i * a), 0)
-        } else if (plane == 'xz') {
-            v = newV(r1 * Math.cos(i * a + b), 0, r2 * Math.sin(i * a + b))
-        } else {
-            console.warn('plane is ' + plane)
-        }
-        p.push(vround(v, 3));
-    }
-    p.push(p[0]);
-    return p;
-}
-
-const newV = function (x = 0, y = 0, z = 0) {
-    return new BABYLON.Vector3(x, y, z);
-}
-
-const dround = function (f, d) {
-    d = Math.round(d);
-    if (d < -15 || d > 15) {
-        return f;
-    }
-    if (d == 0) {
-        return Math.round(f);
-    }
-    let s = Math.pow(10, d);
-    let ff = s * f;
-    return Math.round(ff) / s;
-}
-
-const vround = function (v, d) {
-    let va = [];
-    v.toArray(va);
-    va.forEach((e, ndx) => {
-        va[ndx] = dround(va[ndx], d);
-    })
-    return v.fromArray(va);
-}
-
-function extractDataFromLocalStorage() {
-    // Получаем данные из localStorage по ключу 'air'
-    const airData = JSON.parse(localStorage.getItem('air'));
-
-    if (!airData) {
-        console.error('No data found in localStorage with key "air"');
-        return null;
-    }
-
-    // Инициализируем объект для сохранения извлеченных данных
-    const extractedData = {
-        type: airData.playlist.type,
-        sponsorZones: {
-            sponsorZone1: {
-                id: airData.playlist.sponsorZone1.id,
-                sponsorId: airData.playlist.sponsorZone1.sponsorId,
-                graphicPathFilename: airData.playlist.sponsorZone1.graphicPathFilename
-            },
-            sponsorZone2: {
-                id: airData.playlist.sponsorZone2.id,
-                sponsorId: airData.playlist.sponsorZone2.sponsorId,
-                graphicPathFilename: airData.playlist.sponsorZone2.graphicPathFilename
-            },
-            sponsorZone3: {
-                id: airData.playlist.sponsorZone3.id,
-                sponsorId: airData.playlist.sponsorZone3.sponsorId,
-                graphicPathFilename: airData.playlist.sponsorZone3.graphicPathFilename
-            }
-        },
-        player: null,
-        gameId: airData.gameId,
-        teamId: airData.teamId,
-        color: null,
-        logoId: null
-    };
-
-    // Поиск первого игрока из homeTeamPlayers или awayTeamPlayers
-    const firstHomePlayer = airData.playlist.homeTeamPlayers.length > 0 ? airData.playlist.homeTeamPlayers[0] : null;
-    const firstAwayPlayer = airData.playlist.awayTeamPlayers.length > 0 ? airData.playlist.awayTeamPlayers[0] : null;
-
-    const selectedPlayer = firstHomePlayer || firstAwayPlayer;
-
-    // Если найден игрок, заполняем информацию
-    if (selectedPlayer) {
-        extractedData.player = {
-            id: selectedPlayer.id,
-            first_name: selectedPlayer.first_name,
-            last_name: selectedPlayer.last_name,
-            jersey_number_str: selectedPlayer.jersey_number_str,
-            image_light: selectedPlayer.team_player_images.image_light
-        };
-
-        // Определяем teamId и color в зависимости от команды игрока
-        if (firstHomePlayer && airData.homeTeamColor) {
-            extractedData.color = `#${airData.homeTeamColor.color}`; // цвет домашней команды с символом #
-            if (extractedData.homeTeamImage) {
-                extractedData.logoId = extractedData.homeTeamImage;
-            }
-
-        } else if (firstAwayPlayer && airData.awayTeamColor) {
-            extractedData.color = `#${airData.awayTeamColor.color}`; // цвет выездной команды с символом #
-            if (extractedData.awayTeamImage) {
-                extractedData.logoId = extractedData.awayTeamImage;
-            }
-        }
-    }
-
-    return extractedData;
-}
