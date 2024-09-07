@@ -29,6 +29,10 @@ import {
 } from "./services/screen.js"
 
 import {
+    SegmentService
+} from "./services/segment.js"
+
+import {
     LocalStorageService
 } from "./services/local_storage.js"
 
@@ -55,8 +59,15 @@ if (sceneBase64) {
 }
 
 
-const screenService = new ScreenService();
-const localStorageService = new LocalStorageService();
+let runtime = {
+    shots: [],
+    loaded: false,
+    currentShotIndex: 0
+};
+
+const screenService = new ScreenService(runtime);
+const segmentService = new SegmentService(runtime);
+const localStorageService = new LocalStorageService(runtime);
 
 const extractedData = window.extractedData = localStorageService.extractDataFromLocalStorage();
 
@@ -82,12 +93,6 @@ const engine = new BABYLON.Engine(canvas, true);
 let camera; // Declare camera variable in global scope
 let IS_DEV = false;
 
-let runtime = {
-    shots: [],
-    loaded: false,
-    currentShotIndex: 0
-};
-
 if (urlParams.has('IS_DEV')) {
     IS_DEV = true;
 }
@@ -96,8 +101,9 @@ if (urlParams.has('IS_DEV')) {
 const scene = (() => {
     // Create a basic Babylon Scene object
     const scene = new BABYLON.Scene(engine);
-    
+
     screenService.setScene(scene);
+    segmentService.setScene(scene);
     localStorageService.setScene(scene);
 
     // Create and position a free camera
@@ -116,7 +122,6 @@ const scene = (() => {
     //light2.intensity = 2000;
 
     const markersRoot = new BABYLON.TransformNode("markersRoot", scene);
-
     const segmentsRoot = new BABYLON.TransformNode("segmentsRoot", scene);
 
     // Load the GLTF model
@@ -189,7 +194,7 @@ const scene = (() => {
 
             //IS_DEV && showAxis(100, scene);
 
-            IS_DEV && !IS_CHROMAKEY && setUpSegments({
+            IS_DEV && !IS_CHROMAKEY && segmentService.setUpSegments({
                 "segment_1": {
                     "missed": 10,
                     "made": 20
@@ -530,43 +535,6 @@ const clearShots = function () {
     runtime.currentShotIndex = 0;
 }
 
-const setUpSegments = function (data = {}) {
-    if (!runtime.loaded) {
-        console.warn("Scene has not been loaded yet");
-        return;
-    }
-
-    for (let i = 1; i <= 14; i++) {
-        scene.getMeshByName('segment_' + i).setEnabled(false);
-    }
-
-    const segmentsRoot = scene.getNodeById("segmentsRoot");
-    segmentsRoot.getChildren().forEach(child => scene.removeMesh(child));
-
-    for (const segmentName in data) {
-        const segmentData = data[segmentName];
-        const segmentMesh = scene.getMeshByName(segmentName);
-        const stats = (segmentData.made - segmentData.missed) / segmentData.made;
-        if (segmentData.made == 0) {
-            segmentMesh.setEnabled(false);
-        } else {
-            segmentMesh.setEnabled(true);
-            segmentMesh.position.y = stats * 0.5 - 0.25;
-            if (stats < 0.5) {
-                segmentMesh.material.albedoColor.set(1, 0, 0);
-            } else {
-                segmentMesh.material.albedoColor.set(0, 0, 1);
-            }
-            const scoreText = makeTextPlane(`${segmentData.made - segmentData.missed}/${segmentData.made}`, "white", scene);
-            scoreText.setParent(segmentsRoot);
-            scoreText.position.copyFrom(segmentMesh.position);
-            scoreText.position.y = 1.3;
-            scoreText.position.x *= -1;
-            scoreText.rotate(BABYLON.Axis.Y, -Math.PI / 2, BABYLON.Space.LOCAL);
-        }
-    }
-}
-
 const loadData = function (gameEventId, type, playerId = false, teamId = false) {
     if (!runtime.loaded) {
         console.warn("Scene has not been loaded yet");
@@ -586,7 +554,7 @@ const loadData = function (gameEventId, type, playerId = false, teamId = false) 
             }
 
             if (type == 'shots') {
-                setUpSegments();
+                segmentService.setUpSegments();
                 clearShots();
                 runtime.shots = filtredShots.map((shot) => prepareShot(shot));
             } else if (type == 'zones') {
@@ -606,7 +574,7 @@ const loadData = function (gameEventId, type, playerId = false, teamId = false) 
                     return true;
                 });
 
-                setUpSegments(data);
+                segmentService.setUpSegments(data);
             }
         });
 }

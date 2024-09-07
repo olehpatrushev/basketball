@@ -4,6 +4,11 @@ import {
 
 export class ScreenService extends BaseService {
     setUpScreens(data = {}) {
+        if (!this.runtime.loaded) {
+            console.warn("Scene has not been loaded yet");
+            return;
+        }
+        
         for (const screenId in data) {
             const screenMesh = this.scene.getMeshById(screenId);
             if (screenMesh) {
@@ -27,6 +32,11 @@ export class ScreenService extends BaseService {
         playerImgUrl: null,
         color: null
     }) {
+        if (!this.runtime.loaded) {
+            console.warn("Scene has not been loaded yet");
+            return;
+        }
+
         const font1 = new FontFace("KenyanCoffeeRg-BoldItalic", "url('./fonts/kenyan_coffee_bd_it-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd_it-webfont.woff') format('woff')");
         const font2 = new FontFace("KenyanCoffeeRg-Bold", "url('./fonts/kenyan_coffee_bd-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd-webfont.woff') format('woff')");
 

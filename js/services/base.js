@@ -1,7 +1,12 @@
 export class BaseService {
+    runtime = null
     scene = null
 
-    setScene = (scene) => {
+    constructor(runtime) {
+        this.runtime = runtime
+    }
+
+    setScene(scene) {
         this.scene = scene
     }
 }
