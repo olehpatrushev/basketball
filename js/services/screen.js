@@ -4,13 +4,13 @@ import {
 
 export class ScreenService extends BaseService {
     setUpScreens(data = {}) {
-        if (!this.runtime.loaded) {
+        if (!this.app.runtime.loaded) {
             console.warn("Scene has not been loaded yet");
             return;
         }
         
         for (const screenId in data) {
-            const screenMesh = this.scene.getMeshById(screenId);
+            const screenMesh = this.app.scene.getMeshById(screenId);
             if (screenMesh) {
                 screenMesh.material.albedoTexture.updateURL(data[screenId]);
                 screenMesh.material.emissiveTexture.updateURL(data[screenId]);
@@ -32,7 +32,7 @@ export class ScreenService extends BaseService {
         playerImgUrl: null,
         color: null
     }) {
-        if (!this.runtime.loaded) {
+        if (!this.app.runtime.loaded) {
             console.warn("Scene has not been loaded yet");
             return;
         }
@@ -162,7 +162,7 @@ export class ScreenService extends BaseService {
         // Finally, drawing the image itself on top of the outline
         ctx.drawImage(playerImg, x + outlineSize, y + outlineSize, 1215, 1008);
 
-        const screenMesh = this.scene.getMeshById("screen_1");
+        const screenMesh = this.app.scene.getMeshById("screen_1");
         const base64 = canvas.toDataURL();
         screenMesh.material.albedoTexture.updateURL(base64);
         screenMesh.material.emissiveTexture.updateURL(base64);
