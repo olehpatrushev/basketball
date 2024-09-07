@@ -1,6 +1,6 @@
 import {
     getMarkerSVGContent
-} from "./marker.js";
+} from "./contents/marker.js";
 
 import {
     convertSVGContentToDataUrl,
@@ -14,10 +14,6 @@ import {
 } from "./helpers/cache.js"
 
 import {
-    extractDataFromLocalStorage
-} from "./local_storage.js"
-
-import {
     newV,
     generateCircle,
     makeTextPlane,
@@ -27,6 +23,14 @@ import {
 import {
     pSBC
 } from "./helpers/color.js"
+
+import {
+    ScreenService
+} from "./services/screen.js"
+
+import {
+    LocalStorageService
+} from "./services/local_storage.js"
 
 const baseURL = '//shotv1.4natic.online';
 //const baseURL = '//shotv1.stacqan.com';
@@ -41,16 +45,20 @@ const urlParams = new URLSearchParams(window.location.search);
 
 const sceneBase64 = urlParams.get('scene');
 if (sceneBase64) {
-  try {
-    const decodedString = atob(sceneBase64);
-    window.localStorage.setItem('air', decodedString);
-    console.log('Данные успешно загружены из url');
-  } catch (error) {
-    console.error('Ошибка при декодировании или парсинге:', error);
-  }
+    try {
+        const decodedString = atob(sceneBase64);
+        window.localStorage.setItem('air', decodedString);
+        console.log('Данные успешно загружены из url');
+    } catch (error) {
+        console.error('Ошибка при декодировании или парсинге:', error);
+    }
 }
 
-const extractedData = extractDataFromLocalStorage();
+
+const screenService = new ScreenService();
+const localStorageService = new LocalStorageService();
+
+const extractedData = window.extractedData = localStorageService.extractDataFromLocalStorage();
 
 let IS_CHROMAKEY = false;
 if (urlParams.has('IS_CHROMAKEY')) {
@@ -88,6 +96,9 @@ if (urlParams.has('IS_DEV')) {
 const scene = (() => {
     // Create a basic Babylon Scene object
     const scene = new BABYLON.Scene(engine);
+    
+    screenService.setScene(scene);
+    localStorageService.setScene(scene);
 
     // Create and position a free camera
     camera = new BABYLON.ArcRotateCamera("camera1", 10, 10, 10, BABYLON.Vector3(-8.5, 0, 0.8), scene);
@@ -197,9 +208,9 @@ const scene = (() => {
             scene.getMeshByName('seats').material.albedoColor = BABYLON.Color3.FromHexString(supportColor1);
             scene.getMeshByName('blue_wall').material.albedoColor = BABYLON.Color3.FromHexString(supportColor2);
 
-            setUpScreens({
+            screenService.setUpScreens({
                 "screen_1": "./tex/main_screen_background.jpg"
-            })
+            }, scene)
 
             let sponsorLogo = "./tex/GatoradeG.png";
             if (extractedData && extractedData.sponsorZones && extractedData.sponsorZones.sponsorZone1 && extractedData.sponsorZones.sponsorZone1.id) {
@@ -221,17 +232,14 @@ const scene = (() => {
             const logoMaterial = scene.getMaterialByName('logo');
             logoMaterial.albedoTexture.updateURL(logoURL);
 
-
-
             if (extractedData && !IS_CHROMAKEY) {
                 if (extractedData.type == 'shotMap' && !extractedData.player) {
                     loadData(extractedData.gameId, "shots", false, extractedData.teamId);
-                } 
-                else if(extractedData.type != 'shotMap' && !extractedData.player) {
+                } else if (extractedData.type != 'shotMap' && !extractedData.player) {
                     loadData(extractedData.gameId, "zones", false, extractedData.teamId)
                 }
                 if (extractedData.player) {
-                    setUpMainScreen({
+                    screenService.setUpMainScreen({
                         firstName: extractedData.player.first_name,
                         lastName: extractedData.player.last_name,
                         number: extractedData.player.jersey_number_str,
@@ -240,7 +248,8 @@ const scene = (() => {
                         stat3: "50%",
                         backgroundImgUrl: "./tex/main_screen_background.jpg",
                         teamLogoBackgroundImgUrl: logoURL,
-                        playerImgUrl: "https://shottracker.com/pimg/" + extractedData.player.image_light
+                        playerImgUrl: "https://shottracker.com/pimg/" + extractedData.player.image_light,
+                        color: mainColor
                     });
                     if (extractedData.type == 'shotMap') {
                         loadData(extractedData.gameId, "shots", extractedData.player.id);
@@ -250,41 +259,41 @@ const scene = (() => {
                 }
                 if (extractedData.sponsorZones && extractedData.sponsorZones.sponsorZone2 && extractedData.sponsorZones.sponsorZone2.id) {
                     let smallScreenURL = `${baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.sponsorZones.sponsorZone2.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone2.graphicPathFilename}`;
-                    setUpScreens({
+                    screenService.setUpScreens({
                         "screen_2": smallScreenURL
-                    })
-                    setUpScreens({
+                    }, scene)
+                    screenService.setUpScreens({
                         "screen_3": smallScreenURL
-                    })
+                    }, scene)
                 }
                 if (extractedData.sponsorZones && extractedData.sponsorZones.sponsorZone3 && extractedData.sponsorZones.sponsorZone3.id) {
                     let bigScreenURL = `${baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.sponsorZones.sponsorZone3.sponsorId}&filePath=${extractedData.sponsorZones.sponsorZone3.graphicPathFilename}`;
-                    setUpScreens({
+                    screenService.setUpScreens({
                         "screen_4": bigScreenURL
-                    })
-                    setUpScreens({
+                    }, scene)
+                    screenService.setUpScreens({
                         "screen_5": bigScreenURL
-                    })
+                    }, scene)
                 }
             }
 
             if (IS_CHROMAKEY) {
                 let redpix = './tex/redpix.png';
-                setUpScreens({
+                screenService.setUpScreens({
                     "screen_1": redpix
-                })
-                setUpScreens({
+                }, scene)
+                screenService.setUpScreens({
                     "screen_2": redpix
-                });
-                setUpScreens({
+                }, scene);
+                screenService.setUpScreens({
                     "screen_3": redpix
-                });
-                setUpScreens({
+                }, scene);
+                screenService.setUpScreens({
                     "screen_4": redpix
-                });
-                setUpScreens({
+                }, scene);
+                screenService.setUpScreens({
                     "screen_5": redpix
-                });
+                }, scene);
                 //loadData("b0edea70-22e1-11eb-b93a-02420c129761", "shots");
             }
 
@@ -558,165 +567,6 @@ const setUpSegments = function (data = {}) {
     }
 }
 
-const setUpScreens = function (data = {}) {
-    if (!runtime.loaded) {
-        console.warn("Scene has not been loaded yet");
-        return;
-    }
-
-    for (const screenId in data) {
-        const screenMesh = scene.getMeshById(screenId);
-        if (screenMesh) {
-            screenMesh.material.albedoTexture.updateURL(data[screenId]);
-            screenMesh.material.emissiveTexture.updateURL(data[screenId]);
-        } else {
-            console.warn(`"${screenId}" mesh not found`);
-        }
-    }
-}
-
-const setUpMainScreen = async function (data = {
-    firstName: "Text1",
-    lastName: "Text2",
-    number: "Text3",
-    stat1: "Text4",
-    stat2: "Text5",
-    stat3: "Text6",
-    backgroundImgUrl: null,
-    teamLogoBackgroundImgUrl: null,
-    playerImgUrl: null
-}) {
-    const font1 = new FontFace("KenyanCoffeeRg-BoldItalic", "url('./fonts/kenyan_coffee_bd_it-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd_it-webfont.woff') format('woff')");
-    const font2 = new FontFace("KenyanCoffeeRg-Bold", "url('./fonts/kenyan_coffee_bd-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd-webfont.woff') format('woff')");
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 3840;
-    canvas.height = 1080;
-    const ctx = canvas.getContext('2d');
-
-    // Draw Background
-    const backgroundImg = new Image();
-    backgroundImg.crossOrigin = "anonymous";
-    backgroundImg.src = data.backgroundImgUrl || './tex/main_screen_background.jpg';
-    await backgroundImg.decode();
-    ctx.drawImage(backgroundImg, 0, 0, 3840, 1080);
-    // Draw Player Background
-    const teamLogoBgImg = new Image();
-    teamLogoBgImg.crossOrigin = "anonymous";
-    teamLogoBgImg.src = data.teamLogoBackgroundImgUrl || './tex/main_screen_teamlogo_background.png';
-    await teamLogoBgImg.decode();
-    ctx.globalAlpha = 0.59;
-    ctx.drawImage(teamLogoBgImg, 1153, 432, 656, 659);
-    ctx.globalAlpha = 1.0;
-
-    await font1.load();
-    document.fonts.add(font1);
-
-    // Draw First Name
-    ctx.font = '257px "KenyanCoffeeRg-BoldItalic"';
-    ctx.fillStyle = "#FFFFFF";
-    ctx.textAlign = "left";
-    ctx.shadowColor = "rgba(2,11,57,0.33)";
-    ctx.shadowOffsetX = 27;
-    ctx.shadowOffsetY = 27;
-    ctx.shadowBlur = 0;
-    ctx.fillText(data.firstName.toUpperCase() || "", 1180, 336);
-
-    // Draw Last Name
-    ctx.font = '309px "KenyanCoffeeRg-BoldItalic"';
-    ctx.strokeStyle = mainColor;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.lineWidth = 10;
-    ctx.filter = 'blur(20px)';
-    ctx.strokeText(data.lastName || "", 1127, 600);
-    ctx.filter = 'none';
-    ctx.shadowColor = mainColor;
-    ctx.shadowBlur = 30;
-    ctx.lineWidth = 6;
-    ctx.fillText(data.lastName.toUpperCase() || "", 1127, 600);
-
-    // Draw Player Number
-    ctx.font = '556px "KenyanCoffeeRg-BoldItalic"';
-    ctx.strokeStyle = mainColor;
-    ctx.lineWidth = 10;
-    ctx.filter = 'blur(20px)';
-    ctx.strokeText(data.number || "", 647, 576);
-    ctx.filter = 'none';
-    ctx.lineWidth = 6;
-    ctx.strokeText(data.number || "", 647, 576);
-
-    // Draw Stats Titles
-    ctx.textAlign = "right"
-    ctx.font = '288px "KenyanCoffeeRg-BoldItalic"';
-    ctx.strokeStyle = mainColor;
-    ctx.lineWidth = 10;
-    ctx.filter = 'blur(20px)';
-    ctx.strokeText("POINTS", 3000, 380);
-    ctx.strokeText("FG%", 3000, 676);
-    ctx.strokeText("3 PT FG%", 3000, 959);
-    ctx.filter = 'none';
-    ctx.lineWidth = 6;
-    ctx.strokeText("POINTS", 3000, 380);
-    ctx.strokeText("FG%", 3000, 676);
-    ctx.strokeText("3 PT FG%", 3000, 959);
-    ctx.textAlign = "left"
-
-    await font2.load();
-    document.fonts.add(font2);
-
-    // Draw Stats
-    ctx.font = '288px "KenyanCoffeeRg-Bold"';
-    ctx.fillStyle = "#FFFFFF";
-    ctx.shadowColor = "rgba(2,11,57,0.33)";
-    ctx.shadowOffsetX = 27;
-    ctx.shadowOffsetY = 27;
-    ctx.shadowBlur = 0;
-    ctx.fillText(data.stat1 || "", 3100, 380);
-    ctx.fillText(data.stat2 || "", 3100, 676);
-    ctx.fillText(data.stat3 || "", 3100, 959);
-
-    // Draw Player Image
-    const playerImg = new Image();
-    playerImg.crossOrigin = "anonymous";
-    playerImg.src = data.playerImgUrl || './tex/main_screen_playerimage.png';
-    await playerImg.decode();
-    const outlineSize = 10; // Outline size
-    const x = 50; // X position of the image
-    const y = 100; // Y position of the image
-    ctx.shadowOffsetX = 10;
-    ctx.shadowOffsetY = 10;
-
-    // Creating a temporary canvas for the outline
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCanvas.width = playerImg.width + 2 * outlineSize;
-    tempCanvas.height = playerImg.height + 2 * outlineSize;
-
-    // Drawing the outline on the temporary canvas
-    tempCtx.drawImage(playerImg, outlineSize, outlineSize);
-    tempCtx.globalCompositeOperation = 'source-in';
-    tempCtx.fillStyle = mainColor; // Outline color
-    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-    // Drawing the outline on the main canvas
-    for (let dx = -outlineSize; dx <= outlineSize; dx++) {
-        for (let dy = -outlineSize; dy <= outlineSize; dy++) {
-            if (dx * dx + dy * dy <= outlineSize * outlineSize) {
-                ctx.drawImage(tempCanvas, x + dx, y + dy);
-            }
-        }
-    }
-
-    // Finally, drawing the image itself on top of the outline
-    ctx.drawImage(playerImg, x + outlineSize, y + outlineSize, 1215, 1008);
-
-    const screenMesh = scene.getMeshById("screen_1");
-    const base64 = canvas.toDataURL();
-    screenMesh.material.albedoTexture.updateURL(base64);
-    screenMesh.material.emissiveTexture.updateURL(base64);
-}
-
 const loadData = function (gameEventId, type, playerId = false, teamId = false) {
     if (!runtime.loaded) {
         console.warn("Scene has not been loaded yet");
@@ -727,15 +577,14 @@ const loadData = function (gameEventId, type, playerId = false, teamId = false) 
     const data = fetch(url)
         .then((response) => response.json())
         .then((responseData) => {
-            
+
             let filtredShots;
             if (playerId) {
                 filtredShots = responseData.shots.filter(obj => obj.pid === String(playerId));
-            }
-            else {
+            } else {
                 filtredShots = responseData.shots.filter(obj => obj.tid === String(teamId));
             }
-            
+
             if (type == 'shots') {
                 setUpSegments();
                 clearShots();
@@ -761,5 +610,3 @@ const loadData = function (gameEventId, type, playerId = false, teamId = false) 
             }
         });
 }
-
-window.loadData = loadData
