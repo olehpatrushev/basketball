@@ -136,3 +136,5 @@ app.checkIfLoaded = () => {
 }
 
 app.sceneService.setUpScene();
+
+window.app = app;
