@@ -16,4 +16,8 @@ export class CacheService extends BaseService {
     hasItem(name) {
         return this.cache.hasOwnProperty(name);
     }
+
+    clearItem(name) {
+        delete this.cache[name];
+    }
 }

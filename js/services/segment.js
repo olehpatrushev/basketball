@@ -11,10 +11,7 @@ import {
 
 export class SegmentService extends BaseService {
     setUpSegments(data = {}) {
-        if (!this.app.runtime.loaded) {
-            console.warn("Scene has not been loaded yet");
-            return;
-        }
+        this.app.checkIfLoaded();
 
         for (let i = 1; i <= 14; i++) {
             this.app.scene.getMeshByName('segment_' + i).setEnabled(false);

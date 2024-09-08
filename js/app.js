@@ -1,8 +1,4 @@
 import {
-    pSBC
-} from "./helpers/color.js"
-
-import {
     ScreenService
 } from "./services/screen.js"
 
@@ -29,6 +25,10 @@ import {
 import {
     DataService
 } from "./services/data.js"
+
+import {
+    ColorService
+} from "./services/color.js"
 
 const app = {};
 
@@ -70,20 +70,12 @@ app.shotService = new ShotService(app);
 app.cacheService = new CacheService(app);
 app.sceneService = new SceneService(app);
 app.dataService = new DataService(app);
+app.colorService = new ColorService(app);
 app.localStorageService = new LocalStorageService(app);
 
 app.extractedData = app.localStorageService.extractDataFromLocalStorage();
 
-if (app.IS_CHROMAKEY) {
-    app.mainColor = '#00FF00';
-} else {
-    // Устанавливаем основной цвет из данных, полученных из LocalStorage
-    app.mainColor = app.extractedData && app.extractedData.color ? app.extractedData.color : '#00f6ff';
-}
-
-app.supportColor1 = pSBC(-0.5, app.mainColor, false, true);
-app.supportColor2 = pSBC(-0.7, app.mainColor, false, true);
-app.supportColor3 = pSBC(-0.8, app.mainColor, false, true);
+app.colorService.updateColors();
 
 window.addEventListener("keydown", function (event) {
     if (event.key === 'e') {
@@ -116,7 +108,7 @@ app.startLoop = () => {
 
 // Watch for browser/canvas resize events
 window.addEventListener("resize", function () {
-    engine.resize();
+    app.engine.resize();
 });
 
 // Optionally log camera parameters on key press (e.g., 'p' for print)
@@ -126,8 +118,20 @@ window.addEventListener("keydown", function (event) {
     }
 });
 
-app.sceneService.setUpScene();
+window.addEventListener("storage", function (event) {
+    app.colorService.updateColors();
+    app.sceneService.applyColors();
+    app.shotService.updateMarkers();
+});
 
 if (app.IS_DEV) {
     window.app = app;
 }
+
+app.checkIfLoaded = () => {
+    if (!app.runtime.loaded) {
+        throw "Scene has not been loaded yet";
+    }
+}
+
+app.sceneService.setUpScene();

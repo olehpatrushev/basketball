@@ -4,21 +4,20 @@ import {
 
 export class DataService extends BaseService {
     loadData(gameEventId, type, playerId = false, teamId = false) {
-        if (!this.app.runtime.loaded) {
-            console.warn("Scene has not been loaded yet");
-            return;
-        }
+        this.app.checkIfLoaded();
 
         const url = `${this.app.baseURL}/v1/data/stats/games/${gameEventId}/shots`;
         const data = fetch(url)
             .then((response) => response.json())
             .then((responseData) => {
-
                 let filtredShots;
+
                 if (playerId) {
                     filtredShots = responseData.shots.filter(obj => obj.pid === String(playerId));
-                } else {
+                } else if (teamId) {
                     filtredShots = responseData.shots.filter(obj => obj.tid === String(teamId));
+                } else {
+                    filtredShots = responseData.shots
                 }
 
                 if (type == 'shots') {

@@ -2,7 +2,7 @@ import {
     BaseService
 } from "./base.js";
 
-export class LocalStorageService extends BaseService {
+export class LocalStorageService extends BaseService {    
     extractDataFromLocalStorage() {
         // Получаем данные из localStorage по ключу 'air'
         const airData = JSON.parse(localStorage.getItem('air'));

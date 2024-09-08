@@ -3,12 +3,86 @@ import {
 } from "./base.js";
 
 export class ScreenService extends BaseService {
+    updateScreens() {
+        this.app.checkIfLoaded();
+
+        this.setUpScreens({
+            "screen_1": "./tex/main_screen_background.jpg"
+        }, this.app.scene)
+
+        let sponsorLogo = "./tex/GatoradeG.png";
+        if (this.app.extractedData && this.app.extractedData.sponsorZones && this.app.extractedData.sponsorZones.sponsorZone1 && this.app.extractedData.sponsorZones.sponsorZone1.id) {
+            sponsorLogo = `${this.app.baseURL}/v2/team/public/${this.app.extractedData.teamId}/sponsor/graphics/stream?sponsorId=${this.app.extractedData.sponsorZones.sponsorZone1.sponsorId}&filePath=${this.app.extractedData.sponsorZones.sponsorZone1.graphicPathFilename}`;
+        }
+
+        let logoURL = "./tex/Creighton_Bluejays_logo_svg.png";
+        if (this.app.extractedData && this.app.extractedData.logoId) {
+            logoURL = "https://shottracker.com/pimg/" + this.app.extractedData.logoId;
+        }
+
+        if (this.app.IS_CHROMAKEY) {
+            sponsorLogo = './tex/blue.png';
+            logoURL = './tex/red.png';
+        }
+
+        const sponsorMaterial = this.app.scene.getMaterialByName('sponsor');
+        sponsorMaterial.albedoTexture.updateURL(sponsorLogo);
+        const logoMaterial = this.app.scene.getMaterialByName('logo');
+        logoMaterial.albedoTexture.updateURL(logoURL);
+
+        if (this.app.extractedData && !this.app.IS_CHROMAKEY) {
+            if (this.app.extractedData.player) {
+                this.setUpMainScreen({
+                    firstName: this.app.extractedData.player.first_name,
+                    lastName: this.app.extractedData.player.last_name,
+                    number: this.app.extractedData.player.jersey_number_str,
+                    stat1: "50", // Пример статов, можно заменить на актуальные данные
+                    stat2: "50%",
+                    stat3: "50%",
+                    backgroundImgUrl: "./tex/main_screen_background.jpg",
+                    teamLogoBackgroundImgUrl: logoURL,
+                    playerImgUrl: "https://shottracker.com/pimg/" + this.app.extractedData.player.image_light,
+                    color: this.app.mainColor
+                });
+            }
+            if (this.app.extractedData.sponsorZones && this.app.extractedData.sponsorZones.sponsorZone2 && this.app.extractedData.sponsorZones.sponsorZone2.id) {
+                let smallScreenURL = `${this.app.baseURL}/v2/team/public/${this.app.extractedData.teamId}/sponsor/graphics/stream?sponsorId=${this.app.extractedData.sponsorZones.sponsorZone2.sponsorId}&filePath=${this.app.extractedData.sponsorZones.sponsorZone2.graphicPathFilename}`;
+                this.setUpScreens({
+                    "screen_2": smallScreenURL
+                }, this.app.scene)
+                this.setUpScreens({
+                    "screen_3": smallScreenURL
+                }, this.app.scene)
+            }
+            if (this.app.extractedData.sponsorZones && this.app.extractedData.sponsorZones.sponsorZone3 && this.app.extractedData.sponsorZones.sponsorZone3.id) {
+                let bigScreenURL = `${this.app.baseURL}/v2/team/public/${this.app.extractedData.teamId}/sponsor/graphics/stream?sponsorId=${this.app.extractedData.sponsorZones.sponsorZone3.sponsorId}&filePath=${this.app.extractedData.sponsorZones.sponsorZone3.graphicPathFilename}`;
+                this.setUpScreens({
+                    "screen_4": bigScreenURL
+                }, this.app.scene)
+                this.setUpScreens({
+                    "screen_5": bigScreenURL
+                }, this.app.scene)
+            }
+        }
+
+        if (this.app.IS_CHROMAKEY) {
+            let redpix = './tex/redpix.png';
+            this.setUpScreens({
+                "screen_1": redpix,
+                "screen_2": redpix,
+                "screen_3": redpix,
+                "screen_4": redpix,
+                "screen_5": redpix
+            }, this.app.scene)
+        }
+    }
+
     setUpScreens(data = {}) {
         if (!this.app.runtime.loaded) {
             console.warn("Scene has not been loaded yet");
             return;
         }
-        
+
         for (const screenId in data) {
             const screenMesh = this.app.scene.getMeshById(screenId);
             if (screenMesh) {
@@ -32,10 +106,7 @@ export class ScreenService extends BaseService {
         playerImgUrl: null,
         color: null
     }) {
-        if (!this.app.runtime.loaded) {
-            console.warn("Scene has not been loaded yet");
-            return;
-        }
+        this.app.checkIfLoaded();
 
         const font1 = new FontFace("KenyanCoffeeRg-BoldItalic", "url('./fonts/kenyan_coffee_bd_it-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd_it-webfont.woff') format('woff')");
         const font2 = new FontFace("KenyanCoffeeRg-Bold", "url('./fonts/kenyan_coffee_bd-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd-webfont.woff') format('woff')");

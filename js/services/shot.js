@@ -20,10 +20,7 @@ import {
 
 export class ShotService extends BaseService {
     process() {
-        if (!this.app.runtime.loaded) {
-            console.warn("Scene has not been loaded yet");
-            return;
-        }
+        this.app.checkIfLoaded();
 
         if (this.app.runtime.shots.length > 0) {
             if (this.app.runtime.currentShotIndex + 1 >= this.app.runtime.shots.length) {
@@ -65,9 +62,9 @@ export class ShotService extends BaseService {
                             path: path
                         });
 
-                        shot.tracer.material = new BABYLON.StandardMaterial("trackMat", scene);
-                        shot.tracer.material.diffuseColor = BABYLON.Color3.FromHexString(mainColor);
-                        shot.tracer.material.emissiveColor = BABYLON.Color3.FromHexString(mainColor);
+                        shot.tracer.material = new BABYLON.StandardMaterial("trackMat", this.app.scene);
+                        shot.tracer.material.diffuseColor = BABYLON.Color3.FromHexString(this.app.mainColor);
+                        shot.tracer.material.emissiveColor = BABYLON.Color3.FromHexString(this.app.mainColor);
 
                         shot.tracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
                     }
@@ -79,10 +76,7 @@ export class ShotService extends BaseService {
     }
 
     prepareShot(shotData = {}) {
-        if (!this.app.runtime.loaded) {
-            console.warn("Scene has not been loaded yet");
-            return;
-        }
+        this.app.checkIfLoaded();
 
         let shot = {
             animationIndex: 0,
@@ -118,35 +112,7 @@ export class ShotService extends BaseService {
 
         shot.missed = shotData.st == "MISS";
 
-        let markerMaterial;
-
-        if (shot.missed) {
-            if (hasItem("markerMaterialMissed")) {
-                markerMaterial = getItem("markerMaterialMissed");
-            }
-        } else {
-            if (hasItem("markerMaterialDone")) {
-                markerMaterial = getItem("markerMaterialDone");
-            }
-        }
-
-        if (!markerMaterial) {
-            markerMaterial = new BABYLON.StandardMaterial("shotMat")
-
-            let color;
-
-            if (shot.missed) {
-                cacheItem("markerMaterialMissed", markerMaterial);
-                color = "#ff0000";
-            } else {
-                cacheItem("markerMaterialDone", markerMaterial);
-                color = this.app.mainColor;
-            }
-
-            convertSVGContentToDataUrl(getMarkerSVGContent(color)).then(dataUrl => {
-                markerMaterial.diffuseTexture = markerMaterial.emissiveTexture = markerMaterial.opacityTexture = new BABYLON.Texture(dataUrl);
-            })
-        }
+        let markerMaterial = this.getMarkerMaterial(shot.missed);
 
         const markersRoot = this.app.scene.getNodeById("markersRoot");
         const marker = BABYLON.MeshBuilder.CreatePlane("marker", {
@@ -184,11 +150,55 @@ export class ShotService extends BaseService {
         return shot;
     }
 
-    clearShots() {
-        if (!this.app.runtime.loaded) {
-            console.warn("Scene has not been loaded yet");
-            return;
+    getMarkerMaterial(missed) {
+        let markerMaterial;
+
+        if (missed) {
+            if (this.app.cacheService.hasItem("markerMaterialMissed")) {
+                markerMaterial = this.app.cacheService.getItem("markerMaterialMissed");
+            }
+        } else {
+            if (this.app.cacheService.hasItem("markerMaterialDone")) {
+                markerMaterial = this.app.cacheService.getItem("markerMaterialDone");
+            }
         }
+
+        if (!markerMaterial) {
+            markerMaterial = new BABYLON.StandardMaterial("shotMat")
+
+            let color;
+
+            if (missed) {
+                this.app.cacheService.cacheItem("markerMaterialMissed", markerMaterial);
+                color = "#ff0000";
+            } else {
+                this.app.cacheService.cacheItem("markerMaterialDone", markerMaterial);
+                color = this.app.mainColor;
+            }
+
+            convertSVGContentToDataUrl(getMarkerSVGContent(color)).then(dataUrl => {
+                markerMaterial.diffuseTexture = markerMaterial.emissiveTexture = markerMaterial.opacityTexture = new BABYLON.Texture(dataUrl);
+            })
+        }
+
+        return markerMaterial;
+    }
+
+    updateMarkers() {
+        if (this.app.cacheService.hasItem("markerMaterialDone")) {
+            this.app.cacheService.clearItem("markerMaterialDone");
+        }
+
+        this.app.runtime.shots.every((shot) => {
+            if (!shot.missed) {
+                shot.marker.material = this.getMarkerMaterial(false);
+            }
+            return true;
+        })
+    }
+
+    clearShots() {
+        this.app.checkIfLoaded();
 
         this.app.runtime.shots.every((shot) => {
             if (shot.tracer) {
