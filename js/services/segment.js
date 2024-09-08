@@ -10,12 +10,17 @@ import {
 } from "../helpers/geometry.js";
 
 export class SegmentService extends BaseService {
+    animations = []
+
     setUpSegments(data = {}) {
         this.app.checkIfLoaded();
 
         for (let i = 1; i <= 14; i++) {
             this.app.scene.getMeshByName('segment_' + i).setEnabled(false);
+            this.app.scene.getMeshByName('segment_' + i).position.y = -1;
         }
+
+        this.animations = [];
 
         const segmentsRoot = this.app.scene.getNodeById("segmentsRoot");
         segmentsRoot.getChildren().forEach(child => this.app.scene.removeMesh(child));
@@ -27,8 +32,14 @@ export class SegmentService extends BaseService {
             if (segmentData.made == 0) {
                 segmentMesh.setEnabled(false);
             } else {
+                let animation = {};
                 segmentMesh.setEnabled(true);
-                segmentMesh.position.y = stats * 0.5 - 0.25;
+
+                animation.segmentMesh = segmentMesh;
+                animation.targetPositionY = stats * 0.5 - 0.25;
+
+                this.animations.push(animation);
+
                 if (stats < 0.5) {
                     segmentMesh.material.albedoColor.set(1, 0, 0);
                 } else {
@@ -42,5 +53,17 @@ export class SegmentService extends BaseService {
                 scoreText.rotate(BABYLON.Axis.Y, -Math.PI / 2, BABYLON.Space.LOCAL);
             }
         }
+    }
+
+    process() {
+        this.animations.every((animation, index) => {
+            if (animation.targetPositionY <= animation.segmentMesh.position.y) {
+                this.animations.splice(index, 1);
+            }
+
+            animation.segmentMesh.position.y += 0.03;
+
+            return true;
+        })
     }
 }

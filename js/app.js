@@ -99,6 +99,7 @@ const logCameraParameters = function (camera) {
 app.startLoop = () => {
     app.engine.runRenderLoop(function () {
         app.shotService.process();
+        app.segmentService.process();
 
         app.scene.render();
 
