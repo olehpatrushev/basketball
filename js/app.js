@@ -70,7 +70,7 @@ app.scene = new BABYLON.Scene(app.engine);
 
 
 //Enabling the cache
-if(!app.IS_TEST && !app.IS_DEV) {
+if(!app.IS_DEV) {
     BABYLON.Database.IDBStorageEnabled = true;
     app.engine.enableOfflineSupport = true;
 }
