@@ -52,6 +52,10 @@ if (sceneBase64) {
 
 app.IS_CHROMAKEY = urlParams.has('IS_CHROMAKEY');
 app.IS_DEV = urlParams.has('IS_DEV');
+app.IS_TEST = urlParams.has('IS_TEST');
+if(app.IS_TEST) {
+    app.IS_CHROMAKEY = true;
+}
 
 app.runtime = {
     shots: [],
@@ -63,6 +67,13 @@ app.runtime = {
 app.canvas = document.getElementById('renderCanvas');
 app.engine = new BABYLON.Engine(app.canvas, true);
 app.scene = new BABYLON.Scene(app.engine);
+
+
+//Enabling the cache
+if(!app.IS_TEST && !app.IS_DEV) {
+    BABYLON.Database.IDBStorageEnabled = true;
+    app.engine.enableOfflineSupport = true;
+}
 
 app.screenService = new ScreenService(app);
 app.segmentService = new SegmentService(app);
@@ -102,7 +113,11 @@ app.startLoop = () => {
         app.segmentService.process();
 
         app.scene.render();
-
+        
+        if (app.IS_TEST) {
+            const fpsLabel = document.getElementById("fpsLabel");
+            fpsLabel.innerHTML = app.engine.getFps().toFixed() + " fps";
+        }
         //logCameraParameters(scene.activeCamera);
     });
 }
@@ -127,6 +142,9 @@ window.addEventListener("storage", function (event) {
 
 if (app.IS_DEV) {
     window.app = app;
+    app.scene.debugLayer.show({
+        embedMode: true // Встраивает статистику в окно рендера
+    });
 }
 
 app.checkIfLoaded = () => {

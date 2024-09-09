@@ -23,7 +23,7 @@ export class SceneService extends BaseService {
         const segmentsRoot = new BABYLON.TransformNode("segmentsRoot", this.app.scene);
 
         // Load the GLTF model
-        BABYLON.SceneLoader.Append("./", "scene.gltf" + (this.app.IS_DEV ? "?time=" + (new Date()).getTime() : ""), this.app.scene,
+        BABYLON.SceneLoader.Append("./", "scene.glb" + (this.app.IS_DEV ? "?time=" + (new Date()).getTime() : ""), this.app.scene,
             () => {
                 this.app.runtime.loaded = true;
 
@@ -90,7 +90,7 @@ export class SceneService extends BaseService {
                     this.app.scene.getMeshByName('segment_' + i).setEnabled(false);
                 }
 
-                this.app.IS_DEV && !this.app.IS_CHROMAKEY && this.app.segmentService.setUpSegments({
+                ((this.app.IS_DEV && !this.app.IS_CHROMAKEY) || this.app.IS_TEST) && this.app.segmentService.setUpSegments({
                     "segment_1": {
                         "missed": 10,
                         "made": 20
