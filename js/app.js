@@ -135,9 +135,13 @@ window.addEventListener("keydown", function (event) {
 });
 
 window.addEventListener("storage", function (event) {
-    app.colorService.updateColors();
-    app.sceneService.applyColors();
-    app.shotService.updateMarkers();
+    if (event.key === "air") {
+        console.log("loacalStorage changed");
+        app.extractedData = app.localStorageService.extractDataFromLocalStorage();
+        app.colorService.updateColors();
+        app.sceneService.applyColors();
+        app.shotService.updateMarkers();
+    }
 });
 
 if (app.IS_DEV) {
