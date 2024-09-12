@@ -53,7 +53,7 @@ if (sceneBase64) {
 app.IS_CHROMAKEY = urlParams.has('IS_CHROMAKEY');
 app.IS_DEV = urlParams.has('IS_DEV');
 app.IS_TEST = urlParams.has('IS_TEST');
-if(app.IS_TEST) {
+if (app.IS_TEST) {
     app.IS_CHROMAKEY = true;
 }
 
@@ -70,7 +70,7 @@ app.scene = new BABYLON.Scene(app.engine);
 
 
 //Enabling the cache
-if(!app.IS_DEV) {
+if (!app.IS_DEV) {
     BABYLON.Database.IDBStorageEnabled = true;
     app.engine.enableOfflineSupport = true;
 }
@@ -113,7 +113,7 @@ app.startLoop = () => {
         app.segmentService.process();
 
         app.scene.render();
-        
+
         if (app.IS_TEST) {
             const fpsLabel = document.getElementById("fpsLabel");
             fpsLabel.innerHTML = app.engine.getFps().toFixed() + " fps";
@@ -138,6 +138,7 @@ window.addEventListener("storage", function (event) {
     if (event.key === "air") {
         console.log("loacalStorage changed");
         app.extractedData = app.localStorageService.extractDataFromLocalStorage();
+        app.screenService.updateScreens();
         app.colorService.updateColors();
         app.sceneService.applyColors();
         app.shotService.updateMarkers();

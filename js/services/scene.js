@@ -120,10 +120,6 @@ export class SceneService extends BaseService {
                     }
                 }
 
-//                if (IS_DEV) {
-//                    this.app.dataService.loadData("b0edea70-22e1-11eb-b93a-02420c129761", "shots");
-//                }
-
                 this.app.screenService.updateScreens();
                 this.applyColors();
 
