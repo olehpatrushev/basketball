@@ -119,7 +119,7 @@ export class SceneService extends BaseService {
                         }
                     }
                 }
-
+                
                 this.app.screenService.updateScreens();
                 this.applyColors();
 

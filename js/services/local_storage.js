@@ -7,77 +7,132 @@ export class LocalStorageService extends BaseService {
         // Получаем данные из localStorage по ключу 'air'
         const airData = JSON.parse(localStorage.getItem('air'));
 
+
         if (!airData) {
             console.error('No data found in localStorage with key "air"');
             return null;
         }
 
-        // Инициализируем объект для сохранения извлеченных данных
+        // Initialize an object to store extracted data
         const extractedData = {
-            type: airData.playlist.type,
-            sponsorZones: {
-                sponsorZone1: null,
-                sponsorZone2: null,
-                sponsorZone3: null
-            },
-            player: null,
+            type: airData.type,
+            screensTeam: airData.screensTeam,
             gameId: airData.gameId,
             teamId: airData.teamId,
-            color: null,
-            logoId: null
+            logoHome: airData.logoHome,
+            logoOpponent: airData.logoOpponent,
+            screensLeft: airData.screensLeft,
+            screensCenter: airData.screensCenter,
+            screensRight: airData.screensRight,
+            leftTunnel: airData.selectedLeftTunnelSponsorImage,
+            rightTunnel: airData.selectedRightTunnelSponsorImage,
+            lowerWall: airData.selectedLowerSponsorImage,
+            upperWall: airData.selectedUpperSponsorImage,
+            center: airData.selectedCenterCourtSponsorImage,
+            hoop: airData.selectedHoopStanchionSponsorImage,
+            colors: airData.colors,
+            player: airData.screensPlayer
         };
 
-        if (airData.playlist.sponsorZone1 && airData.playlist.sponsorZone1.id) {
-            extractedData.sponsorZones.sponsorZone1 = {
-                id: airData.playlist.sponsorZone1.id,
-                sponsorId: airData.playlist.sponsorZone1.sponsorId,
-                graphicPathFilename: airData.playlist.sponsorZone1.graphicPathFilename
-            }
+        
+        let background = './tex/background.png';
+        if (extractedData.type != 'shotMap') {
+            background = './tex/background2.png';
         }
-        if (airData.playlist.sponsorZone2 && airData.playlist.sponsorZone2.id) {
-            extractedData.sponsorZones.sponsorZone2 = {
-                id: airData.playlist.sponsorZone2.id,
-                sponsorId: airData.playlist.sponsorZone2.sponsorId,
-                graphicPathFilename: airData.playlist.sponsorZone2.graphicPathFilename
-            }
+        
+        if(airData.colors.length > 0){
+            extractedData.colors = airData.colors;
         }
-        if (airData.playlist.sponsorZone3 && airData.playlist.sponsorZone3.id) {
-            extractedData.sponsorZones.sponsorZone3 = {
-                id: airData.playlist.sponsorZone3.id,
-                sponsorId: airData.playlist.sponsorZone3.sponsorId,
-                graphicPathFilename: airData.playlist.sponsorZone3.graphicPathFilename
-            }
+
+        function getColorByObjectName(data, objectName) {
+            const colorData = data.find(item  => item.objectName === objectName);
+            let defaultColor = '#1328a9';
+            if(objectName == 'SHOT_MISSED' || objectName == 'SHOT_MADE' || objectName == 'SHOT_TRAILER') defaultColor = null;
+            return colorData ? colorData.color : defaultColor;
+        }   
+
+        //main screen
+        let mainScreenSrc = './tex/main_screen_background.jpg';
+        if(extractedData.screensCenter) mainScreenSrc = extractedData.screensCenter;
+
+        //left screen
+        let leftScreenUrl =  "./tex/black.png";
+        if (extractedData.screensLeft) {
+            leftScreenUrl = extractedData.screensLeft;
         }
-        // Поиск первого игрока из homeTeamPlayers или awayTeamPlayers
-        const firstHomePlayer = airData.playlist.homeTeamPlayers.length > 0 ? airData.playlist.homeTeamPlayers[0] : null;
-        const firstAwayPlayer = airData.playlist.awayTeamPlayers.length > 0 ? airData.playlist.awayTeamPlayers[0] : null;
-
-        const selectedPlayer = firstHomePlayer || firstAwayPlayer;
-
-        // Если найден игрок, заполняем информацию
-        if (selectedPlayer) {
-            extractedData.player = {
-                id: selectedPlayer.id,
-                first_name: selectedPlayer.first_name,
-                last_name: selectedPlayer.last_name,
-                jersey_number_str: selectedPlayer.jersey_number_str,
-                image_light: selectedPlayer.team_player_images.image_light
-            };
-
-            // Определяем teamId и color в зависимости от команды игрока
-            if (firstHomePlayer && airData.homeTeamColor) {
-                extractedData.color = `#${airData.homeTeamColor.color}`; // цвет домашней команды с символом #
-                if (airData.homeTeamImage) {
-                    extractedData.logoId = airData.homeTeamImage;
-                }
-
-            } else if (firstAwayPlayer && airData.awayTeamColor) {
-                extractedData.color = `#${airData.awayTeamColor.color}`; // цвет выездной команды с символом #
-                if (airData.awayTeamImage) {
-                    extractedData.logoId = airData.awayTeamImage;
-                }
-            }
+        else if(!extractedData.screensLeft && extractedData.screensRight){
+            leftScreenUrl = extractedData.screensRight;
         }
+        
+        //right screen
+        let rightScreenUrl =  "./tex/black.png";
+        if (extractedData.screensRight) {
+            rightScreenUrl = extractedData.screensRight;
+        }
+        else if(!extractedData.screensRight && extractedData.screensLeft){
+            rightScreenUrl = extractedData.screensLeft;
+        }
+
+        //logo
+        let logoURL = "./tex/pix.png";
+        if(extractedData.screensTeam == 'home' && extractedData.logoHome){
+            logoURL = extractedData.logoHome;
+        }
+        else if(extractedData.screensTeam != 'home' && extractedData.logoOpponent){
+            logoURL = extractedData.logoOpponent;
+        }
+
+        if (extractedData && extractedData.logoId) {
+            logoURL = "https://shottracker.com/pimg/" + extractedData.logoId;
+        }
+
+        //left tunnel
+        let leftTunnelUrl = logoURL;
+        if(extractedData.leftTunnel){
+            leftTunnelUrl = `${this.app.baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.leftTunnel.sponsorId}&filePath=${extractedData.leftTunnel.graphicPathFilename}`;
+            extractedData.leftTunnel = leftTunnelUrl;
+        }
+
+        //right tunnel
+        let rightTunnelUrl = logoURL;
+        if(extractedData.rightTunnel){
+            rightTunnelUrl = `${this.app.baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.rightTunnel.sponsorId}&filePath=${extractedData.rightTunnel.graphicPathFilename}`;
+            extractedData.rightTunnel = rightTunnelUrl;
+        }
+
+        //sponsors
+        let lowerWallUrl = logoURL;
+        if(extractedData.lowerWall) {
+            lowerWallUrl = `${this.app.baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.lowerWall.sponsorId}&filePath=${extractedData.lowerWall.graphicPathFilename}`;
+            extractedData.lowerWall = lowerWallUrl;
+        }
+
+        let upperWallUrl = logoURL;
+        if(extractedData.upperWall) {
+            upperWallUrl = `${this.app.baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.upperWall.sponsorId}&filePath=${extractedData.upperWall.graphicPathFilename}`;
+            extractedData.upperWall = upperWallUrl;
+        }
+
+        let hoopUrl = logoURL;
+        if(extractedData.hoop) {
+            hoopUrl = `${this.app.baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.hoop.sponsorId}&filePath=${extractedData.hoop.graphicPathFilename}`;
+            extractedData.hoop = hoopUrl;
+        }
+
+        let centerUrl  = logoURL;
+        if(extractedData.center) {
+            centerUrl = `${this.app.baseURL}/v2/team/public/${extractedData.teamId}/sponsor/graphics/stream?sponsorId=${extractedData.center.sponsorId}&filePath=${extractedData.center.graphicPathFilename}`;
+            extractedData.center = centerUrl;
+        }
+
+        extractedData.color_lower_wall = getColorByObjectName(extractedData.colors, 'WALL_LOWER');
+        extractedData.color_upper_wall = getColorByObjectName(extractedData.colors, 'WALL_UPPER');
+        extractedData.color_seats = getColorByObjectName(extractedData.colors, 'SEATS');
+        extractedData.color_missed = getColorByObjectName(extractedData.colors, 'SHOT_MISSED');
+        extractedData.color_made = getColorByObjectName(extractedData.colors, 'SHOT_MADE');
+        extractedData.color_path = getColorByObjectName(extractedData.colors, 'SHOT_TRAILER');
+        
+        console.log(extractedData);
 
         return extractedData;
     }

@@ -18,7 +18,33 @@ export class DataService extends BaseService {
                     filtredShots = responseData.shots.filter(obj => obj.tid === String(teamId));
                 } else {
                     filtredShots = responseData.shots
-                }
+                }             
+                
+                let numberOfShots = filtredShots.length;
+                let numberOf3s = 0;
+                let points = 0;
+				let makes = 0;
+                filtredShots.every((shot) => {
+                    if (shot.st == "MAKE") {
+						if (shot.is3) {
+							numberOf3s++;
+							points = points + 3;
+						}
+						else{
+							points = points + 2;
+						}
+						makes++;
+					}					
+                    return true;
+                });
+                let makesRate = Math.round(makes / numberOfShots * 100);
+				let tripleRate = Math.round(numberOf3s / numberOfShots * 100);
+                this.app.stat1 = points;
+                this.app.stat2 = makesRate + "%";
+                this.app.stat3 = tripleRate + "%";
+                
+                //this.app.screenService.updateScreens();
+                //console.log(points + "/" + makesRate  + "/" + tripleRate);
 
                 if (type == 'shots') {
                     this.app.segmentService.setUpSegments();

@@ -6,19 +6,46 @@ export class ScreenService extends BaseService {
     updateScreens() {
         this.app.checkIfLoaded();
 
-        this.setUpScreens({
-            "screen_1": "./tex/main_screen_background.jpg"
-        }, this.app.scene)
+        
 
         let sponsorLogo = "./tex/GatoradeG.png";
-        if (this.app.extractedData && this.app.extractedData.sponsorZones && this.app.extractedData.sponsorZones.sponsorZone1 && this.app.extractedData.sponsorZones.sponsorZone1.id) {
-            sponsorLogo = `${this.app.baseURL}/v2/team/public/${this.app.extractedData.teamId}/sponsor/graphics/stream?sponsorId=${this.app.extractedData.sponsorZones.sponsorZone1.sponsorId}&filePath=${this.app.extractedData.sponsorZones.sponsorZone1.graphicPathFilename}`;
+        if (this.app.extractedData && this.app.extractedData.lowerWall) {
+            sponsorLogo = this.app.extractedData.lowerWall;
+        }
+        let sponsor_lower_wall;
+        if (this.app.extractedData && this.app.extractedData.lowerWall) {
+            sponsor_lower_wall = this.app.extractedData.lowerWall;
+        }
+        let sponsor_upper_wall = sponsorLogo;
+        if (this.app.extractedData && this.app.extractedData.upperWall) {
+            sponsor_upper_wall = this.app.extractedData.upperWall;
+        }
+        let sponsor_hoop = sponsorLogo;
+        if (this.app.extractedData && this.app.extractedData.hoop) {
+            sponsor_hoop = this.app.extractedData.hoop;
+        }
+        let sponsor_center = sponsorLogo;
+        if (this.app.extractedData && this.app.extractedData.center) {
+            sponsor_center = this.app.extractedData.center;
         }
 
+
         let logoURL = "./tex/Creighton_Bluejays_logo_svg.png";
-        if (this.app.extractedData && this.app.extractedData.logoId) {
-            logoURL = "https://shottracker.com/pimg/" + this.app.extractedData.logoId;
+        if (this.app.extractedData && this.app.extractedData.screensTeam == 'home' && this.app.extractedData.logoHome) {
+            logoURL = this.app.extractedData.logoHome;
         }
+        else if(this.app.extractedData && this.app.extractedData.screensTeam != 'home' && this.app.extractedData.logoOpponent) {
+            logoURL = this.app.extractedData.logoOpponent;
+        }
+        
+        let backgroundImgUrl = "./tex/main_screen_background.jpg";
+        if (this.app.extractedData && this.app.extractedData.screensCenter) {
+            backgroundImgUrl = this.app.extractedData.screensCenter;
+        }
+        //alert('test1')
+        this.setUpScreens({
+            "screen_1": backgroundImgUrl
+        }, this.app.scene)
 
         if (this.app.IS_CHROMAKEY) {
             sponsorLogo = './tex/blue.png';
@@ -27,40 +54,76 @@ export class ScreenService extends BaseService {
 
         const sponsorMaterial = this.app.scene.getMaterialByName('sponsor');
         sponsorMaterial.albedoTexture.updateURL(sponsorLogo);
+
+        /*const sponsorLowerWallMaterial = this.app.scene.getMaterialByName('sponsor_lower_wall');
+        sponsorLowerWallMaterial.albedoTexture.updateURL(sponsor_lower_wall);
+
+        const sponsorUpperWallMaterial = this.app.scene.getMaterialByName('sponsor_upper_wall');
+        sponsorUpperWallMaterial.albedoTexture.updateURL(sponsor_upper_wall);
+
+        const sponsorHoopMaterial = this.app.scene.getMaterialByName('sponsor_hoop');
+        sponsorHoopMaterial.albedoTexture.updateURL(sponsor_hoop);
+
+        const sponsorCenterMaterial = this.app.scene.getMaterialByName('sponsor_center');
+        sponsorCenterMaterial.albedoTexture.updateURL(sponsor_center);*/
+
+        
+
         const logoMaterial = this.app.scene.getMaterialByName('logo');
         logoMaterial.albedoTexture.updateURL(logoURL);
+        //console.log('screens');
 
         if (this.app.extractedData && !this.app.IS_CHROMAKEY) {
+            console.log(this.app.stat1);
             if (this.app.extractedData.player) {
                 this.setUpMainScreen({
                     firstName: this.app.extractedData.player.first_name,
                     lastName: this.app.extractedData.player.last_name,
                     number: this.app.extractedData.player.jersey_number_str,
-                    stat1: "50", // Пример статов, можно заменить на актуальные данные
-                    stat2: "50%",
-                    stat3: "50%",
-                    backgroundImgUrl: "./tex/main_screen_background.jpg",
+                    stat1: this.app.stat1 || "",
+                    stat2: this.app.stat2 || "",
+                    stat3: this.app.stat3 || "",
+                    backgroundImgUrl: backgroundImgUrl,
                     teamLogoBackgroundImgUrl: logoURL,
                     playerImgUrl: "https://shottracker.com/pimg/" + this.app.extractedData.player.image_light,
                     color: this.app.mainColor
                 });
             }
-            if (this.app.extractedData.sponsorZones && this.app.extractedData.sponsorZones.sponsorZone2 && this.app.extractedData.sponsorZones.sponsorZone2.id) {
-                let smallScreenURL = `${this.app.baseURL}/v2/team/public/${this.app.extractedData.teamId}/sponsor/graphics/stream?sponsorId=${this.app.extractedData.sponsorZones.sponsorZone2.sponsorId}&filePath=${this.app.extractedData.sponsorZones.sponsorZone2.graphicPathFilename}`;
+            
+            if (this.app.extractedData.screensLeft) {
                 this.setUpScreens({
-                    "screen_2": smallScreenURL
+                    "screen_4": this.app.extractedData.screensLeft
                 }, this.app.scene)
+                if(!this.app.extractedData.screensRight)
                 this.setUpScreens({
-                    "screen_3": smallScreenURL
+                    "screen_5": this.app.extractedData.screensLeft
                 }, this.app.scene)
             }
-            if (this.app.extractedData.sponsorZones && this.app.extractedData.sponsorZones.sponsorZone3 && this.app.extractedData.sponsorZones.sponsorZone3.id) {
-                let bigScreenURL = `${this.app.baseURL}/v2/team/public/${this.app.extractedData.teamId}/sponsor/graphics/stream?sponsorId=${this.app.extractedData.sponsorZones.sponsorZone3.sponsorId}&filePath=${this.app.extractedData.sponsorZones.sponsorZone3.graphicPathFilename}`;
+            if (this.app.extractedData.screensRight) {
                 this.setUpScreens({
-                    "screen_4": bigScreenURL
+                    "screen_5": this.app.extractedData.screensRight
                 }, this.app.scene)
+                if(!this.app.extractedData.screensLeft)
                 this.setUpScreens({
-                    "screen_5": bigScreenURL
+                    "screen_4": this.app.extractedData.screensRight
+                }, this.app.scene)
+            }
+            if (this.app.extractedData.leftTunnel) {
+                this.setUpScreens({
+                    "screen_2": this.app.extractedData.leftTunnel
+                }, this.app.scene)
+                if(!this.app.extractedData.rightTunnel)
+                this.setUpScreens({
+                    "screen_3": this.app.extractedData.leftTunnel
+                }, this.app.scene)
+            }
+            if (this.app.extractedData.rightTunnel) {
+                this.setUpScreens({
+                    "screen_3": this.app.extractedData.rightTunnel
+                }, this.app.scene)
+                if(!this.app.extractedData.leftTunnel)
+                this.setUpScreens({
+                    "screen_2": this.app.extractedData.rightTunnel
                 }, this.app.scene)
             }
         }
@@ -122,6 +185,8 @@ export class ScreenService extends BaseService {
         backgroundImg.src = data.backgroundImgUrl || './tex/main_screen_background.jpg';
         await backgroundImg.decode();
         ctx.drawImage(backgroundImg, 0, 0, 3840, 1080);
+        
+        /*
         // Draw Player Background
         const teamLogoBgImg = new Image();
         teamLogoBgImg.crossOrigin = "anonymous";
@@ -130,10 +195,12 @@ export class ScreenService extends BaseService {
         ctx.globalAlpha = 0.59;
         ctx.drawImage(teamLogoBgImg, 1153, 432, 656, 659);
         ctx.globalAlpha = 1.0;
+        */
 
         await font1.load();
         document.fonts.add(font1);
 
+        /*
         // Draw First Name
         ctx.font = '257px "KenyanCoffeeRg-BoldItalic"';
         ctx.fillStyle = "#FFFFFF";
@@ -183,21 +250,27 @@ export class ScreenService extends BaseService {
         ctx.strokeText("FG%", 3000, 676);
         ctx.strokeText("3 PT FG%", 3000, 959);
         ctx.textAlign = "left"
-
+        */
         await font2.load();
         document.fonts.add(font2);
+        
+        
 
         // Draw Stats
-        ctx.font = '288px "KenyanCoffeeRg-Bold"';
+        ctx.font = '260px "KenyanCoffeeRg-Bold"';
         ctx.fillStyle = "#FFFFFF";
         ctx.shadowColor = "rgba(2,11,57,0.33)";
         ctx.shadowOffsetX = 27;
         ctx.shadowOffsetY = 27;
         ctx.shadowBlur = 0;
-        ctx.fillText(data.stat1 || "", 3100, 380);
-        ctx.fillText(data.stat2 || "", 3100, 676);
-        ctx.fillText(data.stat3 || "", 3100, 959);
-
+        ctx.fillText(data.stat1 || "", 3140, 400);
+        ctx.fillText(data.stat2 || "", 3140, 655);
+        ctx.fillText(data.stat3 || "", 3140, 910);
+        /*ctx.fillText(data.stat1 || "", 3200, 374);
+        ctx.fillText(data.stat2 || "", 3200, 596);
+        ctx.fillText(data.stat3 || "", 3200, 809);*/
+        
+        /*
         // Draw Player Image
         const playerImg = new Image();
         playerImg.crossOrigin = "anonymous";
@@ -232,6 +305,8 @@ export class ScreenService extends BaseService {
 
         // Finally, drawing the image itself on top of the outline
         ctx.drawImage(playerImg, x + outlineSize, y + outlineSize, 1215, 1008);
+        
+        */
 
         const screenMesh = this.app.scene.getMeshById("screen_1");
         const base64 = canvas.toDataURL();

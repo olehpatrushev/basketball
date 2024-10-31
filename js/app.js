@@ -32,8 +32,8 @@ import {
 
 const app = {};
 
-app.baseURL = '//shotv1.4natic.online';
-//const baseURL = '//shotv1.stacqan.com';
+//app.baseURL = '//shotv1.4natic.online';
+app.baseURL = '//prodapi.stacqan.com';
 
 // Получаем данные из LocalStorage
 

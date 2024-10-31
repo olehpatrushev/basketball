@@ -63,8 +63,10 @@ export class ShotService extends BaseService {
                         });
 
                         shot.tracer.material = new BABYLON.StandardMaterial("trackMat", this.app.scene);
-                        shot.tracer.material.diffuseColor = BABYLON.Color3.FromHexString(this.app.mainColor);
-                        shot.tracer.material.emissiveColor = BABYLON.Color3.FromHexString(this.app.mainColor);
+                        let tracerColor = this.app.mainColor;
+                        if(this.app.extractedData.color_path) tracerColor = this.app.extractedData.color_path;
+                        shot.tracer.material.diffuseColor = BABYLON.Color3.FromHexString(tracerColor);
+                        shot.tracer.material.emissiveColor = BABYLON.Color3.FromHexString(tracerColor);
 
                         shot.tracer.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.LOCAL);
                     }
@@ -171,9 +173,11 @@ export class ShotService extends BaseService {
             if (missed) {
                 this.app.cacheService.cacheItem("markerMaterialMissed", markerMaterial);
                 color = "#ff0000";
+                if(this.app.extractedData.color_missed) color = this.app.extractedData.color_missed;
             } else {
                 this.app.cacheService.cacheItem("markerMaterialDone", markerMaterial);
                 color = this.app.mainColor;
+                if(this.app.extractedData.color_done) color = this.app.extractedData.color_done;
             }
 
             convertSVGContentToDataUrl(getMarkerSVGContent(color)).then(dataUrl => {
