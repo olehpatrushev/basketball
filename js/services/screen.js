@@ -3,46 +3,44 @@ import {
 } from "./base.js";
 
 export class ScreenService extends BaseService {
+    
+    
     updateScreens() {
         this.app.checkIfLoaded();
 
-        
-
-        let sponsorLogo = "./tex/GatoradeG.png";
-        if (this.app.extractedData && this.app.extractedData.lowerWall) {
-            sponsorLogo = this.app.extractedData.lowerWall;
-        }
-        let sponsor_lower_wall;
-        if (this.app.extractedData && this.app.extractedData.lowerWall) {
-            sponsor_lower_wall = this.app.extractedData.lowerWall;
-        }
-        let sponsor_upper_wall = sponsorLogo;
-        if (this.app.extractedData && this.app.extractedData.upperWall) {
-            sponsor_upper_wall = this.app.extractedData.upperWall;
-        }
-        let sponsor_hoop = sponsorLogo;
-        if (this.app.extractedData && this.app.extractedData.hoop) {
-            sponsor_hoop = this.app.extractedData.hoop;
-        }
-        let sponsor_center = sponsorLogo;
-        if (this.app.extractedData && this.app.extractedData.center) {
-            sponsor_center = this.app.extractedData.center;
-        }
-
-
-        let logoURL = "./tex/Creighton_Bluejays_logo_svg.png";
+        let logoURL = "./tex/pix.png";
         if (this.app.extractedData && this.app.extractedData.screensTeam == 'home' && this.app.extractedData.logoHome) {
             logoURL = this.app.extractedData.logoHome;
         }
         else if(this.app.extractedData && this.app.extractedData.screensTeam != 'home' && this.app.extractedData.logoOpponent) {
             logoURL = this.app.extractedData.logoOpponent;
         }
+
+        let sponsorLogo = logoURL;
+        if (this.app.extractedData && this.app.extractedData.lowerWall) {
+            sponsorLogo = this.app.extractedData.lowerWall;
+        }
+        let sponsor_lower_wall = logoURL;
+        if (this.app.extractedData && this.app.extractedData.lowerWall) {
+            sponsor_lower_wall = this.app.extractedData.lowerWall;
+        }
+        let sponsor_upper_wall = logoURL;
+        if (this.app.extractedData && this.app.extractedData.upperWall) {
+            sponsor_upper_wall = this.app.extractedData.upperWall;
+        }
+        let sponsor_hoop = logoURL;
+        if (this.app.extractedData && this.app.extractedData.hoop) {
+            sponsor_hoop = this.app.extractedData.hoop;
+        }
+        let sponsor_center = logoURL;
+        if (this.app.extractedData && this.app.extractedData.center) {
+            sponsor_center = this.app.extractedData.center;
+        }
         
         let backgroundImgUrl = "./tex/main_screen_background.jpg";
         if (this.app.extractedData && this.app.extractedData.screensCenter) {
             backgroundImgUrl = this.app.extractedData.screensCenter;
         }
-        //alert('test1')
         this.setUpScreens({
             "screen_1": backgroundImgUrl
         }, this.app.scene)
@@ -52,30 +50,32 @@ export class ScreenService extends BaseService {
             logoURL = './tex/red.png';
         }
 
-        const sponsorMaterial = this.app.scene.getMaterialByName('sponsor');
-        sponsorMaterial.albedoTexture.updateURL(sponsorLogo);
-
-        /*const sponsorLowerWallMaterial = this.app.scene.getMaterialByName('sponsor_lower_wall');
-        sponsorLowerWallMaterial.albedoTexture.updateURL(sponsor_lower_wall);
+        /*const sponsorMaterial = this.app.scene.getMaterialByName('sponsor');
+        sponsorMaterial.albedoTexture.updateURL(sponsorLogo);*/
 
         const sponsorUpperWallMaterial = this.app.scene.getMaterialByName('sponsor_upper_wall');
         sponsorUpperWallMaterial.albedoTexture.updateURL(sponsor_upper_wall);
-
+        
         const sponsorHoopMaterial = this.app.scene.getMaterialByName('sponsor_hoop');
         sponsorHoopMaterial.albedoTexture.updateURL(sponsor_hoop);
-
-        const sponsorCenterMaterial = this.app.scene.getMaterialByName('sponsor_center');
-        sponsorCenterMaterial.albedoTexture.updateURL(sponsor_center);*/
-
         
+        const sponsorCenterMaterial = this.app.scene.getMaterialByName('sponsor_center');
+        sponsorCenterMaterial.albedoTexture.updateURL(sponsor_center);
+        
+        const sponsorLowerWallMaterial = this.app.scene.getMaterialByName('sponsor_lower_wall');
+        sponsorLowerWallMaterial.albedoTexture.updateURL(sponsor_lower_wall);
+        
+        const logoMaterialLower = this.app.scene.getMaterialByName('logo_lower');
+        logoMaterialLower.albedoTexture.updateURL(logoURL);
 
-        const logoMaterial = this.app.scene.getMaterialByName('logo');
-        logoMaterial.albedoTexture.updateURL(logoURL);
+        const logoMaterialUpper = this.app.scene.getMaterialByName('logo_upper');
+        logoMaterialUpper.albedoTexture.updateURL(logoURL);
+       
         //console.log('screens');
 
         if (this.app.extractedData && !this.app.IS_CHROMAKEY) {
             console.log(this.app.stat1);
-            if (this.app.extractedData.player) {
+            /*if (this.app.extractedData.player) {
                 this.setUpMainScreen({
                     firstName: this.app.extractedData.player.first_name,
                     lastName: this.app.extractedData.player.last_name,
@@ -88,7 +88,7 @@ export class ScreenService extends BaseService {
                     playerImgUrl: "https://shottracker.com/pimg/" + this.app.extractedData.player.image_light,
                     color: this.app.mainColor
                 });
-            }
+            }*/
             
             if (this.app.extractedData.screensLeft) {
                 this.setUpScreens({
@@ -117,6 +117,9 @@ export class ScreenService extends BaseService {
                     "screen_3": this.app.extractedData.leftTunnel
                 }, this.app.scene)
             }
+            else this.setUpScreens({
+                    "screen_2": logoURL
+                }, this.app.scene)
             if (this.app.extractedData.rightTunnel) {
                 this.setUpScreens({
                     "screen_3": this.app.extractedData.rightTunnel
@@ -126,6 +129,9 @@ export class ScreenService extends BaseService {
                     "screen_2": this.app.extractedData.rightTunnel
                 }, this.app.scene)
             }
+            else this.setUpScreens({
+                    "screen_3": logoURL
+                }, this.app.scene)
         }
 
         if (this.app.IS_CHROMAKEY) {
@@ -309,8 +315,12 @@ export class ScreenService extends BaseService {
         */
 
         const screenMesh = this.app.scene.getMeshById("screen_1");
-        const base64 = canvas.toDataURL();
+        const base64 = canvas.toDataURL("image/jpeg", 0.5);
         screenMesh.material.albedoTexture.updateURL(base64);
         screenMesh.material.emissiveTexture.updateURL(base64);
+        console.log(base64);
     }
+    
+    
+    
 }

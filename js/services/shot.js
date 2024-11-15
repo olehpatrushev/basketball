@@ -177,7 +177,7 @@ export class ShotService extends BaseService {
             } else {
                 this.app.cacheService.cacheItem("markerMaterialDone", markerMaterial);
                 color = this.app.mainColor;
-                if(this.app.extractedData.color_done) color = this.app.extractedData.color_done;
+                if(this.app.extractedData.color_made) color = this.app.extractedData.color_made;
             }
 
             convertSVGContentToDataUrl(getMarkerSVGContent(color)).then(dataUrl => {

@@ -37,14 +37,31 @@ export class DataService extends BaseService {
 					}					
                     return true;
                 });
-                let makesRate = Math.round(makes / numberOfShots * 100);
-				let tripleRate = Math.round(numberOf3s / numberOfShots * 100);
-                this.app.stat1 = points;
+                let makesRate = 0;
+				let tripleRate = 0;
+                if(numberOfShots){
+                    makesRate = Math.round(makes / numberOfShots * 100);
+				    tripleRate = Math.round(numberOf3s / numberOfShots * 100);
+                }
+                this.app.stat1 = points.toString();
                 this.app.stat2 = makesRate + "%";
                 this.app.stat3 = tripleRate + "%";
                 
                 //this.app.screenService.updateScreens();
-                //console.log(points + "/" + makesRate  + "/" + tripleRate);
+                //alert(points + "/" + makesRate  + "/" + tripleRate);
+                
+                this.app.screenService.setUpMainScreen({
+                    firstName: "Text1",
+                    lastName: "Text2",
+                    number: "Text3",
+                    stat1: this.app.stat1,
+                    stat2: this.app.stat2,
+                    stat3: this.app.stat3,
+                    backgroundImgUrl: this.app.extractedData.screensCenter,
+                    teamLogoBackgroundImgUrl: null,
+                    playerImgUrl: null,
+                    color: null
+                })
 
                 if (type == 'shots') {
                     this.app.segmentService.setUpSegments();
