@@ -33,7 +33,7 @@ import {
 const app = {};
 
 //app.baseURL = '//shotv1.4natic.online';
-app.baseURL = '//prodapi.stacqan.com';
+app.baseURL = '//35.92.92.246';
 
 // Получаем данные из LocalStorage
 
