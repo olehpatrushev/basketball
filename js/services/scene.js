@@ -85,6 +85,7 @@ export class SceneService extends BaseService {
 
                 this.app.scene.getMeshByName('ball1').setEnabled(false);
                 this.app.scene.getMeshByName('ball2').setEnabled(false);
+                this.app.scene.getMeshById("screen_count").setEnabled(false);
 
                 for (let i = 1; i <= 14; i++) {
                     this.app.scene.getMeshByName('segment_' + i).setEnabled(false);

@@ -20,6 +20,8 @@ export class DataService extends BaseService {
                     filtredShots = responseData.shots
                 }             
                 
+                filtredShots.sort((a, b) => (a.st === "MAKE" ? 1 : -1));
+
                 let numberOfShots = filtredShots.length;
                 let numberOf3s = 0;
                 let points = 0;
@@ -58,9 +60,10 @@ export class DataService extends BaseService {
                     stat2: this.app.stat2,
                     stat3: this.app.stat3,
                     backgroundImgUrl: this.app.extractedData.screensCenter,
-                    teamLogoBackgroundImgUrl: null,
+                    teamLogoBackgroundImgUrl: this.app.extractedData.logoScreen,
                     playerImgUrl: null,
-                    color: null
+                    color: null,
+                    noImage: this.app.extractedData.screensCenter ? false : true
                 })
 
                 if (type == 'shots') {

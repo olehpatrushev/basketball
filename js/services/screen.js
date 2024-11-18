@@ -74,7 +74,7 @@ export class ScreenService extends BaseService {
         //console.log('screens');
 
         if (this.app.extractedData && !this.app.IS_CHROMAKEY) {
-            console.log(this.app.stat1);
+
             /*if (this.app.extractedData.player) {
                 this.setUpMainScreen({
                     firstName: this.app.extractedData.player.first_name,
@@ -173,35 +173,37 @@ export class ScreenService extends BaseService {
         backgroundImgUrl: null,
         teamLogoBackgroundImgUrl: null,
         playerImgUrl: null,
-        color: null
+        color: null,
+        noImage: false
     }) {
         this.app.checkIfLoaded();
-
+        console.log(data);
         const font1 = new FontFace("KenyanCoffeeRg-BoldItalic", "url('./fonts/kenyan_coffee_bd_it-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd_it-webfont.woff') format('woff')");
         const font2 = new FontFace("KenyanCoffeeRg-Bold", "url('./fonts/kenyan_coffee_bd-webfont.woff2') format('woff2'), url('./fonts/kenyan_coffee_bd-webfont.woff') format('woff')");
 
         const canvas = document.createElement('canvas');
-        canvas.width = 3840;
-        canvas.height = 1080;
+        canvas.width = 1920;
+        canvas.height = 540;
         const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Draw Background
-        const backgroundImg = new Image();
+        /*const backgroundImg = new Image();
         backgroundImg.crossOrigin = "anonymous";
         backgroundImg.src = data.backgroundImgUrl || './tex/main_screen_background.jpg';
         await backgroundImg.decode();
-        ctx.drawImage(backgroundImg, 0, 0, 3840, 1080);
+        ctx.drawImage(backgroundImg, 0, 0, 3840, 1080);*/
         
-        /*
-        // Draw Player Background
-        const teamLogoBgImg = new Image();
-        teamLogoBgImg.crossOrigin = "anonymous";
-        teamLogoBgImg.src = data.teamLogoBackgroundImgUrl || './tex/main_screen_teamlogo_background.png';
-        await teamLogoBgImg.decode();
-        ctx.globalAlpha = 0.59;
-        ctx.drawImage(teamLogoBgImg, 1153, 432, 656, 659);
-        ctx.globalAlpha = 1.0;
-        */
+        if(data.noImage){
+            // Draw Player Background
+            const teamLogoBgImg = new Image();
+            teamLogoBgImg.crossOrigin = "anonymous";
+            teamLogoBgImg.src = data.teamLogoBackgroundImgUrl || './tex/main_screen_teamlogo_background.png';
+            await teamLogoBgImg.decode();
+            ctx.globalAlpha = 0.59;
+            ctx.drawImage(teamLogoBgImg, 576, 216, 328, 330);
+            ctx.globalAlpha = 1.0;
+        }
 
         await font1.load();
         document.fonts.add(font1);
@@ -240,38 +242,40 @@ export class ScreenService extends BaseService {
         ctx.filter = 'none';
         ctx.lineWidth = 6;
         ctx.strokeText(data.number || "", 647, 576);
-
-        // Draw Stats Titles
-        ctx.textAlign = "right"
-        ctx.font = '288px "KenyanCoffeeRg-BoldItalic"';
-        ctx.strokeStyle = data.color;
-        ctx.lineWidth = 10;
-        ctx.filter = 'blur(20px)';
-        ctx.strokeText("POINTS", 3000, 380);
-        ctx.strokeText("FG%", 3000, 676);
-        ctx.strokeText("3 PT FG%", 3000, 959);
-        ctx.filter = 'none';
-        ctx.lineWidth = 6;
-        ctx.strokeText("POINTS", 3000, 380);
-        ctx.strokeText("FG%", 3000, 676);
-        ctx.strokeText("3 PT FG%", 3000, 959);
-        ctx.textAlign = "left"
         */
+        if(data.noImage){
+            // Draw Stats Titles
+            ctx.textAlign = "right"
+            ctx.font = '130px "KenyanCoffeeRg-BoldItalic"';
+            ctx.strokeStyle = '#FFFFFF';
+            /*ctx.lineWidth = 10;
+            ctx.filter = 'blur(20px)';
+            ctx.strokeText("POINTS", 3000, 400);
+            ctx.strokeText("FG%", 3000, 655);
+            ctx.strokeText("3 PT FG%", 3000, 910);*/
+            ctx.filter = 'none';
+            ctx.lineWidth = 3;
+            ctx.strokeText("POINTS", 1500, 200);
+            ctx.strokeText("FG%", 1500, 327);
+            ctx.strokeText("3 PT FG%", 1500, 455);
+            ctx.textAlign = "left"
+        }
+        
         await font2.load();
         document.fonts.add(font2);
         
         
 
         // Draw Stats
-        ctx.font = '260px "KenyanCoffeeRg-Bold"';
+        ctx.font = '130px "KenyanCoffeeRg-Bold"';
         ctx.fillStyle = "#FFFFFF";
-        ctx.shadowColor = "rgba(2,11,57,0.33)";
+        /*ctx.shadowColor = "rgba(2,11,57,0.33)";
         ctx.shadowOffsetX = 27;
         ctx.shadowOffsetY = 27;
-        ctx.shadowBlur = 0;
-        ctx.fillText(data.stat1 || "", 3140, 400);
-        ctx.fillText(data.stat2 || "", 3140, 655);
-        ctx.fillText(data.stat3 || "", 3140, 910);
+        ctx.shadowBlur = 0;*/
+        ctx.fillText(data.stat1 || "", 1570, 200);
+        ctx.fillText(data.stat2 || "", 1570, 327);
+        ctx.fillText(data.stat3 || "", 1570, 455);
         /*ctx.fillText(data.stat1 || "", 3200, 374);
         ctx.fillText(data.stat2 || "", 3200, 596);
         ctx.fillText(data.stat3 || "", 3200, 809);*/
@@ -314,11 +318,19 @@ export class ScreenService extends BaseService {
         
         */
 
-        const screenMesh = this.app.scene.getMeshById("screen_1");
-        const base64 = canvas.toDataURL("image/jpeg", 0.5);
+        const screenMesh = this.app.scene.getMeshById("screen_count");
+        //const base64 = canvas.toDataURL("image/jpeg", 0.5);
+        const base64 = canvas.toDataURL("image/png");
+        screenMesh.material.albedoTexture.hasAlpha = true;
+        screenMesh.material.emissiveTexture.hasAlpha = true;
         screenMesh.material.albedoTexture.updateURL(base64);
         screenMesh.material.emissiveTexture.updateURL(base64);
-        console.log(base64);
+
+        screenMesh.material.transparencyMode = 3;
+        screenMesh.material.alpha = 1.0;
+        this.app.scene.getMeshById("screen_count").setEnabled(true);
+        
+        //console.log(base64);
     }
     
     

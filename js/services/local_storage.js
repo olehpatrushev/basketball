@@ -31,7 +31,8 @@ export class LocalStorageService extends BaseService {
             center: airData.selectedCenterCourtSponsorImage,
             hoop: airData.selectedHoopStanchionSponsorImage,
             colors: airData.colors,
-            player: airData.screensPlayer
+            player: airData.screensPlayer, 
+            logoScreen: null
         };
 
         
@@ -81,6 +82,8 @@ export class LocalStorageService extends BaseService {
         else if(extractedData.screensTeam != 'home' && extractedData.logoOpponent){
             logoURL = extractedData.logoOpponent;
         }
+
+        extractedData.logoScreen = logoURL;
 
         if (extractedData && extractedData.logoId) {
             logoURL = "https://shottracker.com/pimg/" + extractedData.logoId;

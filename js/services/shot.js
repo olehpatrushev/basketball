@@ -123,7 +123,10 @@ export class ShotService extends BaseService {
         }, this.app.scene);
 
         marker.material = markerMaterial;
-        marker.position.set(-y, 0.13, -x);
+
+        if(shot.missed) marker.position.set(-y, 0.10, -x);
+        else marker.position.set(-y, 0.20, -x);
+
         marker.setParent(markersRoot);
         marker.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.LOCAL);
 
